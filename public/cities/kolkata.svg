@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="Howrah Bridge silhouette">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#ef4444"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="68" fill="rgba(255,255,255,0.14)"/>
+  <path d="M0 560 C140 500 250 520 360 560 S 620 620 770 570 S 980 500 1200 560 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.18)"/>
+  <path d="M0 595 C180 545 350 600 500 585 S 830 545 1040 590 S 1170 610 1200 600 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.22)"/>
+<g transform="translate(640,250)" stroke="rgba(255,255,255,0.22)" stroke-width="14" fill="none"><path d="M20 180 C120 70 260 70 360 180"/><path d="M40 180 C130 110 250 110 340 180"/><path d="M10 180 H370"/></g>
+</svg>

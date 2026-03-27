@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#2D0A45"/>
+      <stop offset="100%" stop-color="#0A0A18"/>
+    </radialGradient>
+    <radialGradient id="glow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#FF6B2C" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#FF6B2C" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background circle -->
+  <circle cx="50" cy="50" r="50" fill="url(#bg)"/>
+  <circle cx="50" cy="50" r="50" fill="url(#glow)"/>
+
+  <!-- Om symbol (ॐ) -->
+  <text
+    x="50"
+    y="68"
+    font-family="serif"
+    font-size="58"
+    text-anchor="middle"
+    fill="#FF6B2C"
+    font-weight="bold"
+  >ॐ</text>
+
+  <!-- Outer ring -->
+  <circle cx="50" cy="50" r="48" fill="none" stroke="#FF6B2C" stroke-width="2" stroke-opacity="0.4"/>
+  <!-- Inner dot ring -->
+  <circle cx="50" cy="50" r="44" fill="none" stroke="#FFB300" stroke-width="0.5" stroke-opacity="0.3" stroke-dasharray="4 6"/>
+</svg>

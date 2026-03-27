@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="Vidhana Soudha silhouette">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="68" fill="rgba(255,255,255,0.14)"/>
+  <path d="M0 560 C140 500 250 520 360 560 S 620 620 770 570 S 980 500 1200 560 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.18)"/>
+  <path d="M0 595 C180 545 350 600 500 585 S 830 545 1040 590 S 1170 610 1200 600 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.22)"/>
+<g transform="translate(655,205)" fill="rgba(255,255,255,0.20)"><rect x="40" y="150" width="360" height="150" rx="14"/><rect x="120" y="90" width="200" height="80" rx="10"/><ellipse cx="220" cy="78" rx="70" ry="42"/></g>
+</svg>

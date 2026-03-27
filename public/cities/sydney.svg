@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="Opera House and Harbour Bridge">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#22c55e"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="68" fill="rgba(255,255,255,0.14)"/>
+  <path d="M0 560 C140 500 250 520 360 560 S 620 620 770 570 S 980 500 1200 560 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.18)"/>
+  <path d="M0 595 C180 545 350 600 500 585 S 830 545 1040 590 S 1170 610 1200 600 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.22)"/>
+<g transform="translate(130,250)" fill="rgba(255,255,255,0.18)"><path d="M0 240 C90 155 170 155 250 240 Z"/><path d="M180 240 C250 140 325 135 420 240 Z"/><path d="M360 240 C420 172 500 166 590 240 Z"/><rect x="0" y="240" width="590" height="22" rx="8"/></g><path d="M70 455 Q180 385 330 430 T 610 458 T 1130 420" fill="none" stroke="rgba(255,255,255,0.2)" stroke-width="18" stroke-linecap="round"/>
+</svg>

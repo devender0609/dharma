@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="India Gate silhouette">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#312e81"/>
+      <stop offset="100%" stop-color="#f97316"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="68" fill="rgba(255,255,255,0.14)"/>
+  <path d="M0 560 C140 500 250 520 360 560 S 620 620 770 570 S 980 500 1200 560 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.18)"/>
+  <path d="M0 595 C180 545 350 600 500 585 S 830 545 1040 590 S 1170 610 1200 600 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.22)"/>
+<g transform="translate(710,180)" fill="rgba(255,255,255,0.20)"><rect x="40" y="85" width="260" height="260" rx="14"/><rect x="95" y="145" width="150" height="140" rx="8" fill="rgba(49,46,129,0.2)"/><path d="M130 345 L130 240 Q130 165 170 120 L170 345 Z" fill="rgba(255,255,255,0.24)"/><path d="M210 345 L210 120 Q250 165 250 240 L250 345 Z" fill="rgba(255,255,255,0.24)"/></g>
+</svg>

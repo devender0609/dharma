@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="700" viewBox="0 0 1200 700" role="img" aria-label="Merlion and skyline">
+  <defs>
+    <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#14b8a6"/>
+    </linearGradient>
+    <linearGradient id="overlay" x1="0" x2="0" y1="0" y2="1">
+      <stop offset="0%" stop-color="rgba(255,255,255,0.16)"/>
+      <stop offset="100%" stop-color="rgba(255,255,255,0.04)"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="700" fill="url(#bg)"/>
+  <circle cx="1010" cy="110" r="68" fill="rgba(255,255,255,0.14)"/>
+  <path d="M0 560 C140 500 250 520 360 560 S 620 620 770 570 S 980 500 1200 560 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.18)"/>
+  <path d="M0 595 C180 545 350 600 500 585 S 830 545 1040 590 S 1170 610 1200 600 L1200 700 L0 700 Z" fill="rgba(0,0,0,0.22)"/>
+<g fill="rgba(255,255,255,0.18)"><rect x="122" y="360" width="84" height="180" rx="8"/><rect x="220" y="305" width="68" height="235" rx="8"/><rect x="303" y="350" width="60" height="190" rx="8"/></g><g transform="translate(735,245)" fill="rgba(255,255,255,0.20)"><path d="M98 0 C138 0 168 28 168 58 C168 90 142 120 108 128 L108 168 C108 212 74 248 30 248 L0 248 C34 212 46 182 46 148 C46 110 62 74 90 48 C80 36 76 24 76 12 Z"/><path d="M166 50 L236 20" stroke="rgba(255,255,255,0.26)" stroke-width="10" stroke-linecap="round"/></g>
+</svg>

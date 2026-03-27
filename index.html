@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <!-- No-referrer: prevents Wikimedia CDN from seeing the Vercel domain and blocking hotlinks -->
+    <meta name="referrer" content="no-referrer" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Viewport — mobile-first, no zoom -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+
+    <!-- PWA meta tags -->
+    <meta name="theme-color" content="#FF6B2C" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Dharma Calendar" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <!-- SEO -->
+    <title>Dharma Calendar AI — Panchang, Festivals & Spiritual AI Guide</title>
+    <meta name="description" content="Intelligent Hindu calendar with live Panchang calculations, festival tracking, AI-powered spiritual guidance, ritual walkthroughs, and habit tracking." />
+    <meta name="keywords" content="panchang, hindu calendar, tithi, nakshatra, festivals, diwali, AI assistant, vedic, muhurat, dharma" />
+    <meta name="author" content="Dharma Calendar AI" />
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Dharma Calendar AI" />
+    <meta property="og:description" content="Your intelligent Hindu calendar companion — Panchang, festivals, AI spiritual guidance." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="/icon-512.png" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Dharma Calendar AI" />
+    <meta name="twitter:description" content="Panchang · Festivals · AI Spiritual Guide" />
+
+    <!-- Splash screen color for iOS -->
+    <meta name="apple-mobile-web-app-status-bar-style" content="black" />
+
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      html, body { height: 100%; background: #0A0A18; }
+      #root { height: 100%; }
+      /* Hide scrollbar globally for cleaner app feel */
+      ::-webkit-scrollbar { width: 0px; background: transparent; }
+      /* Safe area insets for notched phones */
+      body { padding-top: env(safe-area-inset-top); padding-bottom: env(safe-area-inset-bottom); }
+      /* ── Sharp, crisp fonts ── */
+      *, *::before, *::after {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
+        -webkit-text-stroke: 0;
+      }
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        letter-spacing: 0.01em;
+      }
+      /* Prevent tiny text — minimum readable size */
+      span, p, div, button, label, input {
+        font-size: max(12px, inherit);
+      }
+      strong { font-weight: 700; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>
