@@ -1,32 +1,32 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
-  <url>
-    <loc>https://vedatime.vercel.app/</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/today-panchang</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/today-panchang</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/ekadashi-dates</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/ekadashi-dates</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/muhurat-today</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/muhurat-today</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/hindu-festival-calendar</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/hindu-festival-calendar</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/amavasya-purnima</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/amavasya-purnima</loc>
+</url>
 
-  <url>
-    <loc>https://vedatime.vercel.app/nakshatra-today</loc>
-  </url>
+<url>
+<loc>https://vedatime.vercel.app/nakshatra-today</loc>
+</url>
 
 </urlset>
