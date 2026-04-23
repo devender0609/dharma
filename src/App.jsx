@@ -16054,6 +16054,114 @@ function BackgroundBranding({S}){
 function bpGlobalForBranding(w){return w<768?44:w<1100?56:72;}
 
 
+
+function seoHref(pathname, source="seo", medium="organic"){
+  return `https://vedatime.vercel.app${pathname}?utm_source=${source}&utm_medium=${medium}`;
+}
+
+function SeoCtaCluster({S, primaryHref="/", primaryText="Open Vedatime →", secondaryHref="/", secondaryText="Sign In & Save Preferences", tertiaryHref="/", tertiaryText="Explore Premium", note="Personalized Panchang · Festivals · Rituals · AI guidance"}){
+  const linkStyle = {
+    display:"inline-flex",
+    alignItems:"center",
+    justifyContent:"center",
+    textDecoration:"none",
+    minHeight:48,
+    padding:"12px 18px",
+    borderRadius:999,
+    fontWeight:800,
+    fontSize:15,
+    lineHeight:1.2,
+    transition:"transform .15s ease, opacity .15s ease"
+  };
+  return (
+    <div style={{display:"grid",gap:12}}>
+      <div style={{display:"flex",flexWrap:"wrap",gap:10,justifyContent:"center"}}>
+        <a href={primaryHref} style={{...linkStyle,background:`linear-gradient(90deg,${S.gold},${S.saffron})`,color:"#fff",boxShadow:"0 10px 26px rgba(0,0,0,0.22)"}}>
+          {primaryText}
+        </a>
+        <a href={secondaryHref} style={{...linkStyle,background:S.cardHover,border:`1px solid ${S.border}`,color:S.text}}>
+          {secondaryText}
+        </a>
+        <a href={tertiaryHref} style={{...linkStyle,background:"transparent",border:`1px solid ${S.border}`,color:S.text}}>
+          {tertiaryText}
+        </a>
+      </div>
+      <div style={{fontSize:13,color:S.muted,textAlign:"center",lineHeight:1.7}}>{note}</div>
+    </div>
+  );
+}
+
+function SeoStickyConversionBar({S, label="Ready to use the full Vedatime experience?", ctaText="Open Vedatime App", ctaHref="/"}){
+  return (
+    <div style={{position:"sticky",bottom:12,zIndex:5,paddingTop:8}}>
+      <div style={{maxWidth:980,margin:"0 auto",background:"rgba(11,11,31,0.82)",backdropFilter:"blur(10px)",border:`1px solid ${S.border}`,borderRadius:999,padding:"10px 12px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,boxShadow:"0 12px 30px rgba(0,0,0,.25)"}}>
+        <div style={{fontSize:13,fontWeight:700,color:"#fff",paddingLeft:6}}>{label}</div>
+        <a href={ctaHref} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"10px 16px",borderRadius:999,textDecoration:"none",background:`linear-gradient(90deg,${S.gold},${S.saffron})`,color:"#fff",fontWeight:800,fontSize:14,whiteSpace:"nowrap"}}>
+          {ctaText}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function SeoAutoRedirectCard({S, href="/", seconds=12, title="Continue to the full Vedatime experience", description="This page is designed for Google search. Open the full Vedatime app for personalized Panchang, rituals, AI guidance, and saved preferences."}){
+  const [remaining,setRemaining] = useState(seconds);
+  const [enabled,setEnabled] = useState(true);
+  useEffect(()=>{
+    if(!enabled || typeof window==="undefined") return;
+    const id = window.setInterval(()=>{
+      setRemaining(prev=>{
+        if(prev<=1){
+          window.clearInterval(id);
+          window.location.href = href;
+          return 0;
+        }
+        return prev-1;
+      });
+    },1000);
+    return ()=>window.clearInterval(id);
+  },[enabled, href]);
+  return (
+    <div style={{background:S.cardHover,border:`1px dashed ${S.border}`,borderRadius:18,padding:16,display:"grid",gap:10}}>
+      <div style={{fontSize:12,fontWeight:800,letterSpacing:1.1,color:S.muted}}>SMART NEXT STEP</div>
+      <div style={{fontSize:20,fontWeight:900,color:S.text}}>{title}</div>
+      <div style={{fontSize:14,lineHeight:1.75,color:S.muted}}>{description}</div>
+      {enabled ? (
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10}}>
+          <a href={href} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"11px 16px",borderRadius:999,background:`linear-gradient(90deg,${S.gold},${S.saffron})`,color:"#fff",fontWeight:800,textDecoration:"none"}}>
+            Open Now →
+          </a>
+          <button onClick={()=>setEnabled(false)} style={{padding:"11px 16px",borderRadius:999,border:`1px solid ${S.border}`,background:"transparent",color:S.text,fontWeight:700,cursor:"pointer"}}>
+            Stay on this page
+          </button>
+          <div style={{fontSize:13,color:S.muted}}>Auto-opening in {remaining}s</div>
+        </div>
+      ) : (
+        <div style={{display:"flex",flexWrap:"wrap",alignItems:"center",gap:10}}>
+          <a href={href} style={{display:"inline-flex",alignItems:"center",justifyContent:"center",padding:"11px 16px",borderRadius:999,background:`linear-gradient(90deg,${S.gold},${S.saffron})`,color:"#fff",fontWeight:800,textDecoration:"none"}}>
+            Open Vedatime →
+          </a>
+          <div style={{fontSize:13,color:S.muted}}>Auto-redirect paused.</div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SeoTrustStrip({S, items}){
+  return (
+    <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(180px,1fr))",gap:12}}>
+      {items.map((item,idx)=>(
+        <div key={idx} style={{background:S.surface,border:`1px solid ${S.border}`,borderRadius:18,padding:14}}>
+          <div style={{fontSize:12,fontWeight:800,letterSpacing:1.1,color:S.muted,marginBottom:6}}>{item.kicker}</div>
+          <div style={{fontSize:15,fontWeight:800,color:S.text,marginBottom:4}}>{item.title}</div>
+          <div style={{fontSize:13,lineHeight:1.65,color:S.muted}}>{item.body}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function TodayPanchangSEO({S,lang="English"}){
   const title = lang==="Hindi" ? "आज का पंचांग – तिथि, नक्षत्र और मुहूर्त" :
                 lang==="Sanskrit" ? "अद्यतन पञ्चाङ्गम् – तिथिः, नक्षत्रम्, मुहूर्तम्" :
@@ -16069,6 +16177,8 @@ function TodayPanchangSEO({S,lang="English"}){
   const cta = lang==="Hindi" ? "Vedatime खोलें →" :
               lang==="Sanskrit" ? "Vedatime उद्घाटयतु →" :
               "Open Vedatime →";
+  const appHref = seoHref("/", "today_panchang", "organic");
+  const premiumHref = seoHref("/", "today_panchang", "premium_cta");
 
   useEffect(()=>{
     if(typeof document==="undefined") return;
@@ -16110,18 +16220,35 @@ function TodayPanchangSEO({S,lang="English"}){
         <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>
           {lang==="Hindi" ? "दैनिक आध्यात्मिक मार्गदर्शन" : lang==="Sanskrit" ? "दैनिकम् आध्यात्मिक-मार्गदर्शनम्" : "DAILY SPIRITUAL GUIDANCE"}
         </div>
-        <h1 style={{margin:"0 0 10px",fontSize:"clamp(28px,4vw,42px)",lineHeight:1.1}}>
-          {title}
-        </h1>
-        <p style={{margin:0,fontSize:16,lineHeight:1.7,opacity:0.95}}>
-          {intro}
-        </p>
+        <h1 style={{margin:"0 0 10px",fontSize:"clamp(28px,4vw,42px)",lineHeight:1.1}}>{title}</h1>
+        <p style={{margin:0,fontSize:16,lineHeight:1.7,opacity:0.95}}>{intro}</p>
+        <div style={{marginTop:18}}>
+          <SeoCtaCluster
+            S={S}
+            primaryHref={appHref}
+            primaryText={cta}
+            secondaryHref={appHref}
+            secondaryText={lang==="Hindi" ? "साइन इन करके सेटिंग्स सुरक्षित करें" : lang==="Sanskrit" ? "प्रवेश्य सेटिङ्गाः रक्ष्यन्ताम्" : "Sign in & save preferences"}
+            tertiaryHref={premiumHref}
+            tertiaryText={lang==="Hindi" ? "प्रीमियम देखें" : lang==="Sanskrit" ? "प्रीमियम् पश्यतु" : "Explore Premium"}
+            note={lang==="Hindi" ? "व्यक्तिगत पंचांग · व्रत · उत्सव · AI मार्गदर्शन" : lang==="Sanskrit" ? "वैयक्तिक-पञ्चाङ्गम् · व्रतानि · उत्सवाः · AI-मार्गदर्शनम्" : "Personalized Panchang · Festivals · Rituals · AI guidance"}
+          />
+        </div>
       </div>
 
+      <SeoTrustStrip
+        S={S}
+        items={[
+          {kicker: lang==="Hindi" ? "क्या मिलेगा" : lang==="Sanskrit" ? "किं लभ्यते" : "WHAT YOU GET", title: lang==="Hindi" ? "दैनिक पंचांग" : lang==="Sanskrit" ? "दैनिक-पञ्चाङ्गम्" : "Daily Panchang", body: lang==="Hindi" ? "तिथि, नक्षत्र, योग, करण और शुभ समय एक ही स्थान पर।" : lang==="Sanskrit" ? "तिथि-नक्षत्र-योग-करण-मुहूर्तं एकस्मिन् स्थाने।" : "Tithi, nakshatra, yoga, karana, and auspicious timing in one place."},
+          {kicker: lang==="Hindi" ? "व्यक्तिगत" : lang==="Sanskrit" ? "वैयक्तिकम्" : "PERSONALIZED", title: lang==="Hindi" ? "स्थान आधारित मार्गदर्शन" : lang==="Sanskrit" ? "स्थानाधारित-मार्गदर्शनम्" : "Location-based guidance", body: lang==="Hindi" ? "आपके शहर के अनुसार समय, मुहूर्त और उत्सव।" : lang==="Sanskrit" ? "भवतः नगरानुसार कालः, मुहूर्तम्, उत्सवाश्च।" : "Timings, muhurat, and observances tuned to your city."},
+          {kicker: lang==="Hindi" ? "अगला कदम" : lang==="Sanskrit" ? "अनन्तरं" : "NEXT STEP", title: lang==="Hindi" ? "ऐप खोलें और गहराई से देखें" : lang==="Sanskrit" ? "अनुप्रवेश्य विस्तरेण पश्यतु" : "Open the app for the full experience", body: lang==="Hindi" ? "सिर्फ पढ़ें नहीं — पूरा पंचांग, व्रत, AI और प्रीमियम टूल देखें।" : lang==="Sanskrit" ? "केवलं न पठतु — पूर्णं पञ्चाङ्गं, व्रतानि, AI, प्रीमियम्-उपकरणानि च पश्यतु।" : "Go beyond the article into the full app with Panchang, festivals, AI, and premium tools."}
+        ]}
+      />
+
+      <div style={{height:16}} />
+
       <div style={{...box}}>
-        <h2 style={{marginTop:0}}>
-          {lang==="Hindi" ? "आज का पंचांग" : lang==="Sanskrit" ? "अद्यतन-पञ्चाङ्गम्" : "Today’s Panchang"}
-        </h2>
+        <h2 style={{marginTop:0}}>{lang==="Hindi" ? "आज का पंचांग" : lang==="Sanskrit" ? "अद्यतन-पञ्चाङ्गम्" : "Today’s Panchang"}</h2>
         <ul style={{margin:0,paddingLeft:20,lineHeight:1.9}}>
           <li><strong>{lang==="Hindi" ? "तिथि" : lang==="Sanskrit" ? "तिथिः" : "Tithi"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
           <li><strong>{lang==="Hindi" ? "नक्षत्र" : lang==="Sanskrit" ? "नक्षत्रम्" : "Nakshatra"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
@@ -16131,9 +16258,7 @@ function TodayPanchangSEO({S,lang="English"}){
       </div>
 
       <div style={{...box}}>
-        <h2 style={{marginTop:0}}>
-          {lang==="Hindi" ? "आज का शुभ मुहूर्त" : lang==="Sanskrit" ? "अद्यतन-शुभ-मुहूर्तम्" : "Auspicious Muhurat Today"}
-        </h2>
+        <h2 style={{marginTop:0}}>{lang==="Hindi" ? "आज का शुभ मुहूर्त" : lang==="Sanskrit" ? "अद्यतन-शुभ-मुहूर्तम्" : "Auspicious Muhurat Today"}</h2>
         <p style={{margin:0,lineHeight:1.8}}>
           {lang==="Hindi"
             ? "मुहूर्त वह अनुकूल समय है जिसमें पूजा, व्रत, आराधना और महत्वपूर्ण कार्य अधिक शुभ माने जाते हैं। Vedatime आपके स्थान के अनुसार सटीक मुहूर्त दिखाता है।"
@@ -16152,10 +16277,18 @@ function TodayPanchangSEO({S,lang="English"}){
         </ul>
       </div>
 
+      <div style={{...box}}>
+        <SeoAutoRedirectCard
+          S={S}
+          href={appHref}
+          seconds={12}
+          title={lang==="Hindi" ? "पूर्ण Vedatime अनुभव की ओर बढ़ें" : lang==="Sanskrit" ? "पूर्णं Vedatime-अनुभवं प्रति गच्छतु" : "Continue to the full Vedatime experience"}
+          description={lang==="Hindi" ? "यह पृष्ठ Google से आने वाले पाठकों के लिए है। पूर्ण ऐप खोलकर व्यक्तिगत पंचांग, व्रत, उत्सव, AI मार्गदर्शन और सेव की गई पसंद देखें।" : lang==="Sanskrit" ? "अयं पृष्ठः Google-मार्गेण आगतानां कृते। पूर्ण-अनुप्रयोगं उद्घाट्य वैयक्तिकं पञ्चाङ्गं, व्रतानि, उत्सवान्, AI-मार्गदर्शनं, संरक्षित-रुचयश्च पश्यतु।" : "This page is built for Google visitors. Open the full Vedatime app for personalized Panchang, festivals, rituals, AI guidance, and saved preferences."}
+        />
+      </div>
+
       <div style={{...box, textAlign:"center"}}>
-        <h2 style={{marginTop:0}}>
-          {lang==="Hindi" ? "पूर्ण पंचांग और दैनिक मार्गदर्शन देखें" : lang==="Sanskrit" ? "पूर्णं पञ्चाङ्गं दैनिक-मार्गदर्शनं च पश्यतु" : "Check Full Panchang & Daily Guidance"}
-        </h2>
+        <h2 style={{marginTop:0}}>{lang==="Hindi" ? "पूर्ण पंचांग और दैनिक मार्गदर्शन देखें" : lang==="Sanskrit" ? "पूर्णं पञ्चाङ्गं दैनिक-मार्गदर्शनं च पश्यतु" : "Check Full Panchang & Daily Guidance"}</h2>
         <p style={{lineHeight:1.8}}>
           {lang==="Hindi"
             ? "Vedatime पर आज की तिथि, नक्षत्र, मुहूर्त, व्रत, उत्सव और व्यक्तिगत आध्यात्मिक मार्गदर्शन देखें।"
@@ -16163,14 +16296,27 @@ function TodayPanchangSEO({S,lang="English"}){
             ? "Vedatime इत्यत्र अद्यतन-तिथि-नक्षत्र-मुहूर्त-व्रत-उत्सव-पथं वैयक्तिकं च आध्यात्मिक-मार्गदर्शनं पश्यतु।"
             : "Explore daily Panchang, festivals, vrats, and personalized spiritual guidance with Vedatime."}
         </p>
-        <a href="https://vedatime.vercel.app" style={{display:"inline-block",marginTop:8,padding:"12px 18px",borderRadius:999,background:"linear-gradient(90deg,"+S.gold+","+S.saffron+")",color:"#fff",fontWeight:800,textDecoration:"none"}}>
-          {cta}
-        </a>
+        <SeoCtaCluster
+          S={S}
+          primaryHref={appHref}
+          primaryText={cta}
+          secondaryHref={appHref}
+          secondaryText={lang==="Hindi" ? "साइन इन करें" : lang==="Sanskrit" ? "प्रविशतु" : "Sign in"}
+          tertiaryHref={premiumHref}
+          tertiaryText={lang==="Hindi" ? "प्रीमियम अनलॉक करें" : lang==="Sanskrit" ? "प्रीमियम् उद्घाटयतु" : "Unlock Premium"}
+          note={lang==="Hindi" ? "7 दिन निःशुल्क · कभी भी रद्द करें · व्यक्तिगत आध्यात्मिक टूलकिट" : lang==="Sanskrit" ? "७ दिवसाः निःशुल्काः · यदा इच्छेत तदा रद्दुं शक्यते · वैयक्तिकम् आध्यात्मिक-उपकरण-संग्रहः" : "7-day free trial · cancel anytime · personalized spiritual toolkit"}
+        />
       </div>
+
+      <SeoStickyConversionBar
+        S={S}
+        label={lang==="Hindi" ? "पूरा Vedatime अनुभव खोलें" : lang==="Sanskrit" ? "पूर्णं Vedatime-अनुभवं उद्घाटयतु" : "Open the full Vedatime experience"}
+        ctaText={lang==="Hindi" ? "ऐप खोलें" : lang==="Sanskrit" ? "अनुप्रयोगं उद्घाटयतु" : "Open app"}
+        ctaHref={appHref}
+      />
     </div>
   );
 }
-
 
 function SeoMeta({title, description}){
   useEffect(()=>{
@@ -16198,7 +16344,9 @@ function SeoMeta({title, description}){
   return null;
 }
 
-function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://vedatime.vercel.app",description}){
+function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://vedatime.vercel.app",description,sourceKey="seo_page"}){
+  const appHref = ctaHref || seoHref("/", sourceKey, "organic");
+  const premiumHref = seoHref("/", sourceKey, "premium_cta");
   const box = {
     background:S.card,
     border:"1px solid "+S.border,
@@ -16211,12 +16359,33 @@ function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://ve
     <div style={{maxWidth:980,margin:"0 auto",padding:"24px 0 56px",color:S.text}}>
       <SeoMeta title={title + " | Vedatime"} description={description || intro} />
       <div style={{...box, background:S.heroGrad, color:"#fff"}}>
-        <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>
-          {eyebrow}
-        </div>
+        <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>{eyebrow}</div>
         <h1 style={{margin:"0 0 10px",fontSize:"clamp(28px,4vw,42px)",lineHeight:1.1}}>{title}</h1>
         <p style={{margin:0,fontSize:16,lineHeight:1.7,opacity:0.95}}>{intro}</p>
+        <div style={{marginTop:18}}>
+          <SeoCtaCluster
+            S={S}
+            primaryHref={appHref}
+            primaryText={ctaText}
+            secondaryHref={appHref}
+            secondaryText="Sign In & Save Preferences"
+            tertiaryHref={premiumHref}
+            tertiaryText="Unlock Premium"
+            note="Personalized Panchang · Festival calendar · Ritual guidance · AI tools"
+          />
+        </div>
       </div>
+
+      <SeoTrustStrip
+        S={S}
+        items={[
+          {kicker:"WHY THIS PAGE", title:"Search-friendly entry point", body:"This page is designed to answer a specific search clearly, then guide readers into the full Vedatime app."},
+          {kicker:"IN THE APP", title:"More than a single article", body:"Vedatime gives daily Panchang, sacred dates, rituals, muhurat, AI guidance, and saved preferences in one place."},
+          {kicker:"CONVERSION", title:"Low-friction next step", body:"Readers can open the main app immediately, sign in, and continue with a richer personalized experience."}
+        ]}
+      />
+
+      <div style={{height:16}} />
 
       {sections.map((section, idx)=>(
         <div key={idx} style={box}>
@@ -16230,15 +16399,32 @@ function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://ve
         </div>
       ))}
 
+      <div style={{...box}}>
+        <SeoAutoRedirectCard
+          S={S}
+          href={appHref}
+          seconds={12}
+          title="Continue to the full Vedatime experience"
+          description="This search page gives you the overview. Open the app for daily personalization, saved settings, premium tools, and a richer spiritual journey."
+        />
+      </div>
+
       <div style={{...box, textAlign:"center"}}>
         <h2 style={{marginTop:0}}>Vedatime</h2>
-        <p style={{lineHeight:1.8}}>
-          Open Vedatime for daily Panchang, festivals, vrats, muhurat, and personalized spiritual guidance.
-        </p>
-        <a href={ctaHref} style={{display:"inline-block",marginTop:8,padding:"12px 18px",borderRadius:999,background:"linear-gradient(90deg,"+S.gold+","+S.saffron+")",color:"#fff",fontWeight:800,textDecoration:"none"}}>
-          {ctaText}
-        </a>
+        <p style={{lineHeight:1.8}}>Open Vedatime for daily Panchang, festivals, vrats, muhurat, and personalized spiritual guidance.</p>
+        <SeoCtaCluster
+          S={S}
+          primaryHref={appHref}
+          primaryText={ctaText}
+          secondaryHref={appHref}
+          secondaryText="Sign in"
+          tertiaryHref={premiumHref}
+          tertiaryText="Explore Premium"
+          note="7-day free trial · cancel anytime · personalized spiritual toolkit"
+        />
       </div>
+
+      <SeoStickyConversionBar S={S} ctaHref={appHref} />
     </div>
   );
 }
@@ -16252,6 +16438,7 @@ function EkadashiSeoPage({S}){
       intro="Ekadashi is a sacred fasting day dedicated to Lord Vishnu and observed twice each lunar month. Use Vedatime to stay aligned with upcoming Ekadashi dates, fasting guidance, and spiritual observance."
       description="Find Ekadashi dates, fasting guidance, and upcoming observances with Vedatime. Stay aligned with sacred Hindu fasting days and Vishnu devotion."
       ctaText="Track Ekadashi on Vedatime →"
+      sourceKey="ekadashi_dates"
       sections={[
         {title:"Why observe Ekadashi?", list:[
           "A traditional day of spiritual purification and discipline",
@@ -16273,6 +16460,7 @@ function MuhuratSeoPage({S}){
       intro="Muhurat identifies the most favorable time for important actions, rituals, and spiritual practices. Vedatime helps you understand auspicious timings based on your location and the Hindu calendar."
       description="Check today's muhurat and auspicious timings with Vedatime. Use accurate daily guidance for rituals, puja, ceremonies, and important moments."
       ctaText="Check Today’s Muhurat →"
+      sourceKey="muhurat_today"
       sections={[
         {title:"Common uses of muhurat", list:[
           "Puja and temple observance",
@@ -16294,6 +16482,7 @@ function FestivalCalendarSeoPage({S}){
       intro="Follow major Hindu festivals, sacred observances, and traditional celebrations throughout the year with Vedatime’s daily calendar experience."
       description="Explore the Hindu festival calendar with Vedatime. Track major observances, sacred dates, and celebration guidance through the year."
       ctaText="Explore Festival Calendar →"
+      sourceKey="festival_calendar"
       sections={[
         {title:"Major observances", list:[
           "Diwali, Holi, Navratri, Janmashtami, Maha Shivratri, and more",
@@ -16315,6 +16504,7 @@ function LunarSeoPage({S}){
       intro="Amavasya (new moon) and Purnima (full moon) carry special significance in Hindu spiritual life. Vedatime helps you track both with daily context and observance guidance."
       description="Track Amavasya and Purnima dates with Vedatime. Follow important lunar observances, fasting days, and spiritual timing."
       ctaText="View Lunar Observances →"
+      sourceKey="amavasya_purnima"
       sections={[
         {title:"Why these dates matter", list:[
           "Amavasya is often observed with introspection, prayer, and offerings",
@@ -16336,6 +16526,7 @@ function NakshatraSeoPage({S}){
       intro="Nakshatra refers to the lunar constellation influencing the day. Vedatime helps you understand today’s nakshatra as part of the broader Panchang and daily spiritual rhythm."
       description="Check today's nakshatra with Vedatime. Understand the daily lunar constellation and its connection to Panchang and spiritual timing."
       ctaText="Check Today’s Nakshatra →"
+      sourceKey="nakshatra_today"
       sections={[
         {title:"Why nakshatra matters", list:[
           "It adds depth to daily Panchang understanding",
@@ -16347,6 +16538,7 @@ function NakshatraSeoPage({S}){
     />
   );
 }
+
 
 
 export default function App(){
