@@ -1,0 +1,33 @@
+
+.intro-splash {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle at top, #1a1145, #07041f);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 1;
+  transition: opacity 0.6s ease;
+}
+
+.intro-splash.fade-out {
+  opacity: 0;
+}
+
+.logo-container {
+  text-align: center;
+  color: #ffffff;
+}
+
+.title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.subtitle {
+  font-size: 1rem;
+  opacity: 0.85;
+  margin-top: 8px;
+}
