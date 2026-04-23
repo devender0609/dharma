@@ -16172,6 +16172,183 @@ function TodayPanchangSEO({S,lang="English"}){
 }
 
 
+function SeoMeta({title, description}){
+  useEffect(()=>{
+    if(typeof document==="undefined") return;
+    const prevTitle = document.title;
+    const prevMeta = document.querySelector('meta[name="description"]');
+    const prevDesc = prevMeta?.getAttribute("content") || "";
+    document.title = title;
+    let meta = prevMeta;
+    if(!meta){
+      meta = document.createElement("meta");
+      meta.setAttribute("name","description");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content", description);
+    return ()=>{
+      document.title = prevTitle;
+      const current = document.querySelector('meta[name="description"]');
+      if(current){
+        if(prevDesc) current.setAttribute("content", prevDesc);
+        else if(!prevMeta) current.remove();
+      }
+    };
+  },[title, description]);
+  return null;
+}
+
+function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://vedatime.vercel.app",description}){
+  const box = {
+    background:S.card,
+    border:"1px solid "+S.border,
+    borderRadius:24,
+    padding:20,
+    boxShadow:"0 12px 40px rgba(0,0,0,0.18)",
+    marginBottom:16
+  };
+  return (
+    <div style={{maxWidth:980,margin:"0 auto",padding:"24px 0 56px",color:S.text}}>
+      <SeoMeta title={title + " | Vedatime"} description={description || intro} />
+      <div style={{...box, background:S.heroGrad, color:"#fff"}}>
+        <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>
+          {eyebrow}
+        </div>
+        <h1 style={{margin:"0 0 10px",fontSize:"clamp(28px,4vw,42px)",lineHeight:1.1}}>{title}</h1>
+        <p style={{margin:0,fontSize:16,lineHeight:1.7,opacity:0.95}}>{intro}</p>
+      </div>
+
+      {sections.map((section, idx)=>(
+        <div key={idx} style={box}>
+          <h2 style={{marginTop:0}}>{section.title}</h2>
+          {section.text ? <p style={{margin:0,lineHeight:1.8}}>{section.text}</p> : null}
+          {section.list ? (
+            <ul style={{margin: section.text ? "12px 0 0" : 0, paddingLeft:20, lineHeight:1.9}}>
+              {section.list.map((item,i)=><li key={i}>{item}</li>)}
+            </ul>
+          ) : null}
+        </div>
+      ))}
+
+      <div style={{...box, textAlign:"center"}}>
+        <h2 style={{marginTop:0}}>Vedatime</h2>
+        <p style={{lineHeight:1.8}}>
+          Open Vedatime for daily Panchang, festivals, vrats, muhurat, and personalized spiritual guidance.
+        </p>
+        <a href={ctaHref} style={{display:"inline-block",marginTop:8,padding:"12px 18px",borderRadius:999,background:"linear-gradient(90deg,"+S.gold+","+S.saffron+")",color:"#fff",fontWeight:800,textDecoration:"none"}}>
+          {ctaText}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+function EkadashiSeoPage({S}){
+  return (
+    <SeoInfoPage
+      S={S}
+      title="Ekadashi Dates & Fasting Calendar"
+      eyebrow="SACRED FASTING DAYS"
+      intro="Ekadashi is a sacred fasting day dedicated to Lord Vishnu and observed twice each lunar month. Use Vedatime to stay aligned with upcoming Ekadashi dates, fasting guidance, and spiritual observance."
+      description="Find Ekadashi dates, fasting guidance, and upcoming observances with Vedatime. Stay aligned with sacred Hindu fasting days and Vishnu devotion."
+      ctaText="Track Ekadashi on Vedatime →"
+      sections={[
+        {title:"Why observe Ekadashi?", list:[
+          "A traditional day of spiritual purification and discipline",
+          "An opportunity for fasting, prayer, mantra, and Vishnu devotion",
+          "A simple way to stay connected to monthly sacred observances"
+        ]},
+        {title:"How Vedatime helps", text:"Vedatime makes it easier to follow upcoming Ekadashi dates, understand timing, and connect fasting with your daily spiritual rhythm."}
+      ]}
+    />
+  );
+}
+
+function MuhuratSeoPage({S}){
+  return (
+    <SeoInfoPage
+      S={S}
+      title="Today’s Muhurat – Auspicious Timings"
+      eyebrow="AUSPICIOUS TIMINGS"
+      intro="Muhurat identifies the most favorable time for important actions, rituals, and spiritual practices. Vedatime helps you understand auspicious timings based on your location and the Hindu calendar."
+      description="Check today's muhurat and auspicious timings with Vedatime. Use accurate daily guidance for rituals, puja, ceremonies, and important moments."
+      ctaText="Check Today’s Muhurat →"
+      sections={[
+        {title:"Common uses of muhurat", list:[
+          "Puja and temple observance",
+          "Beginning important life events or family rituals",
+          "Choosing the most harmonious time for meaningful actions"
+        ]},
+        {title:"Daily timing guidance", text:"Vedatime connects muhurat with the daily Panchang so you can see favorable windows alongside tithi, nakshatra, and festival context."}
+      ]}
+    />
+  );
+}
+
+function FestivalCalendarSeoPage({S}){
+  return (
+    <SeoInfoPage
+      S={S}
+      title="Hindu Festival Calendar"
+      eyebrow="FESTIVALS THROUGH THE YEAR"
+      intro="Follow major Hindu festivals, sacred observances, and traditional celebrations throughout the year with Vedatime’s daily calendar experience."
+      description="Explore the Hindu festival calendar with Vedatime. Track major observances, sacred dates, and celebration guidance through the year."
+      ctaText="Explore Festival Calendar →"
+      sections={[
+        {title:"Major observances", list:[
+          "Diwali, Holi, Navratri, Janmashtami, Maha Shivratri, and more",
+          "Sacred fasts and lunar observances connected to festival timing",
+          "Location-aware calendar guidance to support planning and preparation"
+        ]},
+        {title:"Why this matters", text:"A festival calendar helps families, devotees, and learners stay rooted in the yearly rhythm of Hindu tradition."}
+      ]}
+    />
+  );
+}
+
+function LunarSeoPage({S}){
+  return (
+    <SeoInfoPage
+      S={S}
+      title="Amavasya & Purnima Dates"
+      eyebrow="LUNAR OBSERVANCES"
+      intro="Amavasya (new moon) and Purnima (full moon) carry special significance in Hindu spiritual life. Vedatime helps you track both with daily context and observance guidance."
+      description="Track Amavasya and Purnima dates with Vedatime. Follow important lunar observances, fasting days, and spiritual timing."
+      ctaText="View Lunar Observances →"
+      sections={[
+        {title:"Why these dates matter", list:[
+          "Amavasya is often observed with introspection, prayer, and offerings",
+          "Purnima is associated with fullness, devotion, and sacred observance",
+          "Both are important anchors in the lunar rhythm of the Hindu calendar"
+        ]},
+        {title:"With Vedatime", text:"See Amavasya and Purnima alongside Panchang details, festivals, and daily spiritual guidance."}
+      ]}
+    />
+  );
+}
+
+function NakshatraSeoPage({S}){
+  return (
+    <SeoInfoPage
+      S={S}
+      title="Today’s Nakshatra"
+      eyebrow="DAILY LUNAR CONSTELLATION"
+      intro="Nakshatra refers to the lunar constellation influencing the day. Vedatime helps you understand today’s nakshatra as part of the broader Panchang and daily spiritual rhythm."
+      description="Check today's nakshatra with Vedatime. Understand the daily lunar constellation and its connection to Panchang and spiritual timing."
+      ctaText="Check Today’s Nakshatra →"
+      sections={[
+        {title:"Why nakshatra matters", list:[
+          "It adds depth to daily Panchang understanding",
+          "It supports timing, observance, and spiritual awareness",
+          "It is commonly used in ritual, astrology, and calendar guidance"
+        ]},
+        {title:"Daily context", text:"Vedatime shows nakshatra with tithi, yoga, karana, and auspicious timings so the day can be understood as a whole."}
+      ]}
+    />
+  );
+}
+
+
 export default function App(){
   const bp=useBreakpoint();
   const[tab,setTab]=useState("today");
@@ -16330,14 +16507,25 @@ export default function App(){
   },[isPremium]);
   const S=THEMES[theme]||DARK;
   const T=TRANSLATIONS[lang]||TRANSLATIONS.English;
-  if(typeof window!=="undefined" && window.location.pathname === "/today-panchang"){
-    return(
-      <ErrorBoundary>
-        <div style={{background:'transparent',minHeight:"100dvh",position:"relative",color:S.text,padding:"0 16px"}}>
-          <TodayPanchangSEO S={S} lang={lang} />
-        </div>
-      </ErrorBoundary>
-    );
+  if(typeof window!=="undefined"){
+    const path = window.location.pathname;
+    const seoPage = ({
+      "/today-panchang": <TodayPanchangSEO S={S} lang={lang} />,
+      "/ekadashi-dates": <EkadashiSeoPage S={S} />,
+      "/muhurat-today": <MuhuratSeoPage S={S} />,
+      "/hindu-festival-calendar": <FestivalCalendarSeoPage S={S} />,
+      "/amavasya-purnima": <LunarSeoPage S={S} />,
+      "/nakshatra-today": <NakshatraSeoPage S={S} />,
+    })[path];
+    if(seoPage){
+      return(
+        <ErrorBoundary>
+          <div style={{background:'transparent',minHeight:"100dvh",position:"relative",color:S.text,padding:"0 16px"}}>
+            {seoPage}
+          </div>
+        </ErrorBoundary>
+      );
+    }
   }
   const props={S,bp,goTo:setTab,T,theme,setTheme,lang,setLang,selectedLocation,setSelectedLocation};
   const screen={
