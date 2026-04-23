@@ -16053,6 +16053,125 @@ function BackgroundBranding({S}){
 }
 function bpGlobalForBranding(w){return w<768?44:w<1100?56:72;}
 
+
+function TodayPanchangSEO({S,lang="English"}){
+  const title = lang==="Hindi" ? "आज का पंचांग – तिथि, नक्षत्र और मुहूर्त" :
+                lang==="Sanskrit" ? "अद्यतन पञ्चाङ्गम् – तिथिः, नक्षत्रम्, मुहूर्तम्" :
+                "Today Panchang – Tithi, Nakshatra & Muhurat";
+  const intro = lang==="Hindi"
+    ? "पंचांग पारंपरिक हिन्दू कैलेंडर है, जिसका उपयोग शुभ समय, व्रत, त्योहार और दैनिक आध्यात्मिक आचरण समझने के लिए किया जाता है।"
+    : lang==="Sanskrit"
+    ? "पञ्चाङ्गं पारम्परिकं हिन्दू-पञ्चाङ्गम् अस्ति, यत् शुभकाल-निर्णये, व्रत-उत्सव-आचरणे, दैनिक-आध्यात्मिक-जीवने च उपयुज्यते।"
+    : "The Panchang is the traditional Hindu calendar used to determine auspicious timings, festivals, fasting days, and daily spiritual practices.";
+  const whyTitle = lang==="Hindi" ? "पंचांग क्यों महत्वपूर्ण है" :
+                   lang==="Sanskrit" ? "पञ्चाङ्गस्य महत्त्वम्" :
+                   "Why Panchang Matters";
+  const cta = lang==="Hindi" ? "Vedatime खोलें →" :
+              lang==="Sanskrit" ? "Vedatime उद्घाटयतु →" :
+              "Open Vedatime →";
+
+  useEffect(()=>{
+    if(typeof document==="undefined") return;
+    const prevTitle = document.title;
+    const prevDesc = document.querySelector('meta[name="description"]')?.getAttribute("content") || "";
+    document.title = title + " | Vedatime";
+    let meta = document.querySelector('meta[name="description"]');
+    if(!meta){
+      meta = document.createElement("meta");
+      meta.setAttribute("name","description");
+      document.head.appendChild(meta);
+    }
+    meta.setAttribute("content",
+      lang==="Hindi"
+        ? "आज की तिथि, नक्षत्र, योग, करण और मुहूर्त स्थान के अनुसार देखें। Vedatime पर दैनिक पंचांग और आध्यात्मिक मार्गदर्शन प्राप्त करें।"
+        : lang==="Sanskrit"
+        ? "अद्यतन-तिथि, नक्षत्र, योग, करण, मुहूर्तं च स्व-स्थानानुसार पश्यतु। Vedatime इत्यत्र दैनिक-पञ्चाङ्गं आध्यात्मिक-मार्गदर्शनं च लभ्यते।"
+        : "Check today’s Panchang including tithi, nakshatra, yoga, karana, and muhurat based on your location. Get daily spiritual guidance with Vedatime."
+    );
+    return ()=>{
+      document.title = prevTitle;
+      const current = document.querySelector('meta[name="description"]');
+      if(current && prevDesc) current.setAttribute("content", prevDesc);
+    };
+  },[lang, title]);
+
+  const box = {
+    background:S.card,
+    border:"1px solid "+S.border,
+    borderRadius:24,
+    padding:20,
+    boxShadow:"0 12px 40px rgba(0,0,0,0.18)",
+    marginBottom:16
+  };
+
+  return (
+    <div style={{maxWidth:980,margin:"0 auto",padding:"24px 0 56px",color:S.text}}>
+      <div style={{...box, background:S.heroGrad, color:"#fff"}}>
+        <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>
+          {lang==="Hindi" ? "दैनिक आध्यात्मिक मार्गदर्शन" : lang==="Sanskrit" ? "दैनिकम् आध्यात्मिक-मार्गदर्शनम्" : "DAILY SPIRITUAL GUIDANCE"}
+        </div>
+        <h1 style={{margin:"0 0 10px",fontSize:"clamp(28px,4vw,42px)",lineHeight:1.1}}>
+          {title}
+        </h1>
+        <p style={{margin:0,fontSize:16,lineHeight:1.7,opacity:0.95}}>
+          {intro}
+        </p>
+      </div>
+
+      <div style={{...box}}>
+        <h2 style={{marginTop:0}}>
+          {lang==="Hindi" ? "आज का पंचांग" : lang==="Sanskrit" ? "अद्यतन-पञ्चाङ्गम्" : "Today’s Panchang"}
+        </h2>
+        <ul style={{margin:0,paddingLeft:20,lineHeight:1.9}}>
+          <li><strong>{lang==="Hindi" ? "तिथि" : lang==="Sanskrit" ? "तिथिः" : "Tithi"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
+          <li><strong>{lang==="Hindi" ? "नक्षत्र" : lang==="Sanskrit" ? "नक्षत्रम्" : "Nakshatra"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
+          <li><strong>{lang==="Hindi" ? "योग" : lang==="Sanskrit" ? "योगः" : "Yoga"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
+          <li><strong>{lang==="Hindi" ? "करण" : lang==="Sanskrit" ? "करणम्" : "Karana"}:</strong> {lang==="Hindi" ? "Vedatime से स्वचालित" : lang==="Sanskrit" ? "Vedatime-तः स्वयमेव" : "Auto from Vedatime"}</li>
+        </ul>
+      </div>
+
+      <div style={{...box}}>
+        <h2 style={{marginTop:0}}>
+          {lang==="Hindi" ? "आज का शुभ मुहूर्त" : lang==="Sanskrit" ? "अद्यतन-शुभ-मुहूर्तम्" : "Auspicious Muhurat Today"}
+        </h2>
+        <p style={{margin:0,lineHeight:1.8}}>
+          {lang==="Hindi"
+            ? "मुहूर्त वह अनुकूल समय है जिसमें पूजा, व्रत, आराधना और महत्वपूर्ण कार्य अधिक शुभ माने जाते हैं। Vedatime आपके स्थान के अनुसार सटीक मुहूर्त दिखाता है।"
+            : lang==="Sanskrit"
+            ? "मुहूर्तः सः अनुकूलः कालः यत्र पूजा, व्रतं, आराधना, महत्त्वपूर्ण-कर्म च अधिक-शुभं मन्यते। Vedatime भवतः स्थानानुसार यथार्थं मुहूर्तं दर्शयति।"
+            : "Muhurat is the most favorable time for rituals, worship, fasting, and important actions. Vedatime helps you see accurate muhurat based on your location."}
+        </p>
+      </div>
+
+      <div style={{...box}}>
+        <h2 style={{marginTop:0}}>{whyTitle}</h2>
+        <ul style={{margin:0,paddingLeft:20,lineHeight:1.9}}>
+          <li>{lang==="Hindi" ? "अनुष्ठान और पूजा के लिए उपयुक्त समय चुनने में सहायता" : lang==="Sanskrit" ? "अनुष्ठान-पूजयोः योग्य-काल-निर्णये सहायता" : "Helps choose the right time for rituals and puja"}</li>
+          <li>{lang==="Hindi" ? "एकादशी, प्रदोष, पूर्णिमा जैसे व्रतों और पर्वों का पालन आसान बनाता है" : lang==="Sanskrit" ? "एकादशी-प्रदोष-पूर्णिमादि-व्रत-पर्वपालनं सुकरं करोति" : "Makes it easier to observe Ekadashi, Pradosh, Purnima, and festival days"}</li>
+          <li>{lang==="Hindi" ? "दैनिक जीवन को पारंपरिक आध्यात्मिक लय से जोड़ता है" : lang==="Sanskrit" ? "दैनिकजीवनं पारम्परिक-आध्यात्मिक-लयया संयोजयति" : "Aligns daily life with traditional spiritual rhythms"}</li>
+        </ul>
+      </div>
+
+      <div style={{...box, textAlign:"center"}}>
+        <h2 style={{marginTop:0}}>
+          {lang==="Hindi" ? "पूर्ण पंचांग और दैनिक मार्गदर्शन देखें" : lang==="Sanskrit" ? "पूर्णं पञ्चाङ्गं दैनिक-मार्गदर्शनं च पश्यतु" : "Check Full Panchang & Daily Guidance"}
+        </h2>
+        <p style={{lineHeight:1.8}}>
+          {lang==="Hindi"
+            ? "Vedatime पर आज की तिथि, नक्षत्र, मुहूर्त, व्रत, उत्सव और व्यक्तिगत आध्यात्मिक मार्गदर्शन देखें।"
+            : lang==="Sanskrit"
+            ? "Vedatime इत्यत्र अद्यतन-तिथि-नक्षत्र-मुहूर्त-व्रत-उत्सव-पथं वैयक्तिकं च आध्यात्मिक-मार्गदर्शनं पश्यतु।"
+            : "Explore daily Panchang, festivals, vrats, and personalized spiritual guidance with Vedatime."}
+        </p>
+        <a href="https://vedatime.vercel.app" style={{display:"inline-block",marginTop:8,padding:"12px 18px",borderRadius:999,background:"linear-gradient(90deg,"+S.gold+","+S.saffron+")",color:"#fff",fontWeight:800,textDecoration:"none"}}>
+          {cta}
+        </a>
+      </div>
+    </div>
+  );
+}
+
+
 export default function App(){
   const bp=useBreakpoint();
   const[tab,setTab]=useState("today");
@@ -16211,6 +16330,15 @@ export default function App(){
   },[isPremium]);
   const S=THEMES[theme]||DARK;
   const T=TRANSLATIONS[lang]||TRANSLATIONS.English;
+  if(typeof window!=="undefined" && window.location.pathname === "/today-panchang"){
+    return(
+      <ErrorBoundary>
+        <div style={{background:'transparent',minHeight:"100dvh",position:"relative",color:S.text,padding:"0 16px"}}>
+          <TodayPanchangSEO S={S} lang={lang} />
+        </div>
+      </ErrorBoundary>
+    );
+  }
   const props={S,bp,goTo:setTab,T,theme,setTheme,lang,setLang,selectedLocation,setSelectedLocation};
   const screen={
     today:<TodayScreen {...props}/>,
