@@ -6,12 +6,12 @@ importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js
 importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
 
 firebase.initializeApp({
-  apiKey: "PASTE_YOUR_REAL_FIREBASE_API_KEY_HERE",
+  apiKey: "AIzaSyCFc7ogpQ6kZUMkyP2XAQFUIom-WBXe8QE",
   authDomain: "vedatime-37e37.firebaseapp.com",
   projectId: "vedatime-37e37",
   storageBucket: "vedatime-37e37.appspot.com",
-  messagingSenderId: "PASTE_YOUR_REAL_MESSAGING_SENDER_ID_HERE",
-  appId: "PASTE_YOUR_REAL_APP_ID_HERE",
+  messagingSenderId: "377861968808",
+  appId: "1:377861968808:web:4382e975212abc62b4039d",
 });
 
 const messaging = firebase.messaging();
