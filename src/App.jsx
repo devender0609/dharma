@@ -5325,17 +5325,24 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
   const[reminderSetupStatus,setReminderSetupStatus]=useState('');
   const setPreferredDeity=(id)=>{ _setPreferredDeity(id); try{ if(id) localStorage.setItem("vedatime_preferred_deity",id); else localStorage.removeItem("vedatime_preferred_deity"); }catch(e){} };
   const enableSmartReminders=async()=>{
-    if(smartRemindersBusy) return;
-    setSmartRemindersBusy(true);
-    setSmartRemindersEnabled(true); // instant UI feedback while Firebase creates the token
-    setReminderSetupStatus('⏳ Turning reminders on…');
+    if(smartRemindersEnabled) return;
+
+    // Instant UX: change the button immediately. Firebase may take a few seconds,
+    // but users should not feel stuck on an Updating state.
+    setSmartRemindersEnabled(true);
+    setSmartRemindersBusy(false);
+    setReminderSetupStatus('✅ Reminders enabled. Finalizing device setup…');
     try{
-      const result = await enableVedatimePushReminders({
-        location: selectedLocation,
-        interests: userInterests,
-        observanceTypes: ['ashtami','ekadashi','pradosh','purnima','amavasya','chaturthi','shashthi','navami'],
-        source: 'today-screen'
-      });
+      localStorage.setItem('vedatime_reminders','true');
+      localStorage.setItem('vedatime_push_enabled','true');
+    }catch(e){}
+
+    enableVedatimePushReminders({
+      location: selectedLocation,
+      interests: userInterests,
+      observanceTypes: ['ashtami','ekadashi','pradosh','purnima','amavasya','chaturthi','shashthi','navami'],
+      source: 'today-screen'
+    }).then((result)=>{
       if(result?.ok && result?.token){
         setSmartRemindersEnabled(true);
         setReminderSetupStatus('✅ Reminders enabled.');
@@ -5359,20 +5366,22 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
         try{ localStorage.setItem('vedatime_reminders','false'); localStorage.setItem('vedatime_push_enabled','false'); }catch(e){}
         try{ console.warn('[Vedatime reminders] Setup failed:', result); }catch(_){}
       }
-    }catch(e){
+    }).catch((e)=>{
       setSmartRemindersEnabled(false);
       setReminderSetupStatus(`⚠️ Reminder setup failed: ${e?.message || e}`);
+      try{ localStorage.setItem('vedatime_reminders','false'); localStorage.setItem('vedatime_push_enabled','false'); }catch(_){}
       try{ console.error('[Vedatime reminders] Setup error:', e); }catch(_){}
-    }finally{
-      setSmartRemindersBusy(false);
-    }
+    });
   };
 
   const disableSmartReminders=async()=>{
-    if(smartRemindersBusy) return;
-    setSmartRemindersBusy(true);
-    setSmartRemindersEnabled(false); // instant UI feedback while Firebase unregisters token
-    setReminderSetupStatus('⏳ Turning reminders off…');
+    if(!smartRemindersEnabled) return;
+
+    // Instant UX: disable in Vedatime immediately. Browser permission may remain allowed,
+    // but the app preference and saved token are cleared right away.
+    setSmartRemindersEnabled(false);
+    setSmartRemindersBusy(false);
+    setReminderSetupStatus('✅ Reminders disabled in Vedatime.');
     try{
       localStorage.setItem('vedatime_reminders','false');
       localStorage.setItem('vedatime_push_enabled','false');
@@ -5381,42 +5390,14 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
       localStorage.removeItem('fcm_token');
       localStorage.removeItem('vedatime_last_fcm_token');
     }catch(e){}
-    try{
-      await disableVedatimePushReminders();
+
+    disableVedatimePushReminders().then(()=>{
       setReminderSetupStatus('✅ Reminders disabled in Vedatime. Browser permission may still show as allowed in site settings.');
-    }catch(e){
+    }).catch((e)=>{
       setReminderSetupStatus('✅ Reminders disabled in Vedatime. Network cleanup will finish automatically if needed.');
       try{ console.warn('[Vedatime reminders] Disable cleanup warning:', e); }catch(_){}
-    }finally{
-      setSmartRemindersEnabled(false);
-      setSmartRemindersBusy(false);
-    }
+    });
   };
-
-  const[deityPickerOpen,setDeityPickerOpen]=useState(false);
-  const[actionExpanded,setActionExpanded]=useState(false); // V100: stable state for DailyActionEngine
-  const[showAllMuhurats,setShowAllMuhurats]=useState(false);
-  const now=useCurrentTime();
-  const todayKey=getLocalDateKeyForLocation(selectedLocation);
-  const panchang=getLocationPanchang(todayKey,selectedLocation);
-  const importantToday=getTodayImportantObservanceEntries(selectedLocation);
-  const nextImportantObs=getNextImportantObservance(selectedLocation,45);
-  const locationMeta=getLocationMeta(selectedLocation);
-  const activeMuh=getActiveMuhurat(now);
-  const verse=VERSES[verseIdx];
-  const isWide=bp==="desktop";
-  // V102: wrapped in try-catch — toLocaleTimeString with timeZone throws RangeError in Firefox if tz is unrecognized
-  let timeStr=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true});
-  try{ timeStr=now.toLocaleTimeString("en-IN",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:true,timeZone:locationMeta.tz}); }catch(_){}
-  // Resolve effective deity (user preference or day-of-week default)
-  const _dowIdx=now.getDay();
-  const _effectiveDeityId=preferredDeity||(DEITY_OPTIONS[DOW_DEITY_IDX[_dowIdx]]?.id)||"shiva";
-  const _effectiveDeity=DEITY_OPTIONS.find(d=>d.id===_effectiveDeityId)||DEITY_OPTIONS[0];
-  // Sankalpa Journal state — persisted to localStorage
-  const[sankalpaText,_setSankalpaText]=useState(()=>{try{return localStorage.getItem("vedatime_sankalpa_"+new Date().toDateString())||"";}catch(e){return "";}});
-  const[sankalpaInput,setSankalpaInput]=useState(sankalpaText);
-  const[sankalpaOpen,setSankalpaOpen]=useState(false);
-  const saveSankalpa=(txt)=>{_setSankalpaText(txt);setSankalpaInput(txt);try{localStorage.setItem("vedatime_sankalpa_"+new Date().toDateString(),txt);}catch(e){}};
 
   useEffect(()=>{
     if(!smartRemindersEnabled || !importantToday.length) return;
@@ -5770,7 +5751,7 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
             <p style={{color:S.text,fontSize:14,fontWeight:800,margin:'0 0 4px'}}>Festival, muhurat, and daily practice nudges</p>
             <p style={{color:S.muted,fontSize:12,margin:0,lineHeight:1.7}}>{smartRemindersEnabled?'Browser reminders are enabled. Click Disable reminders to turn them off in Vedatime.':'Turn on browser notifications for lightweight reminders.'}</p>{reminderSetupStatus&&<p style={{color:reminderSetupStatus.startsWith('✅')?S.green:reminderSetupStatus.startsWith('⏳')?S.blue:S.gold,fontSize:11.5,margin:'6px 0 0',fontWeight:800}}>{reminderSetupStatus}</p>}
           </div>
-          <button onClick={smartRemindersEnabled?disableSmartReminders:enableSmartReminders} disabled={smartRemindersBusy} style={{padding:'7px 12px',borderRadius:11,border:'none',background:smartRemindersBusy?'linear-gradient(135deg,#64748B,#94A3B8)':smartRemindersEnabled?'linear-gradient(135deg,#EF4444,#FF7040)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:smartRemindersBusy?'wait':'pointer',opacity:smartRemindersBusy?0.9:1,boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersBusy?'⏳ Updating…':smartRemindersEnabled?'Disable reminders':'Enable reminders'}</button>
+          <button onClick={smartRemindersEnabled?disableSmartReminders:enableSmartReminders} style={{padding:'7px 12px',borderRadius:11,border:'none',background:smartRemindersEnabled?'linear-gradient(135deg,#EF4444,#FF7040)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersEnabled?'Disable reminders':'Enable reminders'}</button>
         </div>
       </Card>
       <Card S={S} style={{marginBottom:14,background:'linear-gradient(135deg,rgba(255,112,64,0.08),rgba(255,192,64,0.05))',border:'1px solid rgba(255,112,64,0.2)'}}>
