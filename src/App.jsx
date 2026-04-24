@@ -1462,6 +1462,50 @@ function getTodayObservances(locationKey){
     : [local.nextFestival || "Rama Navami — Mar 27"];
 }
 
+function getTodayImportantObservanceEntries(locationKey){
+  const dateKey=getLocalDateKeyForLocation(locationKey);
+  const p=getLocationPanchang(dateKey, locationKey);
+  const meta=getLocationMeta(locationKey);
+  const obs=Array.isArray(p?.todayObservances)?p.todayObservances:[];
+  return obs.map((name,idx)=>({
+    id:`today-observance-${dateKey}-${idx}`,
+    name,
+    dateKey,
+    city:meta.label,
+    tithi:p?.tithi?.name||"Tithi",
+    tithiEnds:p?.tithi?.ends||"timing varies by location",
+    vedic:p?.hindu||`${p?.paksha||""} ${p?.tithi?.name||""}`.trim(),
+    icon:String(name).toLowerCase().includes("ekadashi")?"🙏":String(name).toLowerCase().includes("ashtami")?"🪷":String(name).toLowerCase().includes("pradosh")?"🔱":String(name).toLowerCase().includes("purnima")?"🌕":String(name).toLowerCase().includes("amavasya")?"🌑":"🪔",
+  }));
+}
+
+function getNextImportantObservance(locationKey,daysAhead=45){
+  const startKey=getLocalDateKeyForLocation(locationKey);
+  const start=new Date(startKey+"T12:00:00");
+  for(let i=1;i<=daysAhead;i++){
+    const d=new Date(start);
+    d.setDate(start.getDate()+i);
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const p=getLocationPanchang(key,locationKey);
+    const obs=Array.isArray(p?.todayObservances)?p.todayObservances:[];
+    const meaningful=obs.find(x=>!String(x).toLowerCase().includes("observance")||/(ashtami|ekadashi|pradosh|purnima|amavasya|chaturthi|shivratri|shashthi)/i.test(String(x)));
+    if(meaningful){
+      return {
+        id:`next-observance-${key}`,
+        name:meaningful,
+        dateKey:key,
+        days:i,
+        date:d.toLocaleDateString("en-US",{month:"short",day:"2-digit"}),
+        tithi:p?.tithi?.name||"Tithi",
+        tithiEnds:p?.tithi?.ends||"timing varies by location",
+        vedic:p?.hindu||`${p?.paksha||""} ${p?.tithi?.name||""}`.trim(),
+        icon:String(meaningful).toLowerCase().includes("ekadashi")?"🙏":String(meaningful).toLowerCase().includes("ashtami")?"🪷":String(meaningful).toLowerCase().includes("pradosh")?"🔱":String(meaningful).toLowerCase().includes("purnima")?"🌕":String(meaningful).toLowerCase().includes("amavasya")?"🌑":"🪔",
+      };
+    }
+  }
+  return null;
+}
+
 function formatLocationToday(locationKey){
   const localDateKey=getLocalDateKeyForLocation(locationKey);
   const local=getLocationPanchang(localDateKey, locationKey);
@@ -5282,7 +5326,13 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
     if(result==='granted'){
       setSmartRemindersEnabled(true);
       try{ localStorage.setItem('vedatime_reminders','true'); }catch(e){}
-      try{ new Notification('Vedatime reminders enabled',{body:'You will now see browser reminders when supported.'}); }catch(e){}
+      try{
+        const obs=getTodayImportantObservanceEntries(selectedLocation);
+        const body=obs.length
+          ? obs.map(x=>`${x.icon} ${x.name} — ${x.vedic}${x.tithiEnds?` (ends ${x.tithiEnds})`:""}`).join("\n")
+          : 'You will now see browser reminders when supported.';
+        new Notification(obs.length?'Today on Vedatime':'Vedatime reminders enabled',{body});
+      }catch(e){}
     }
   };
   const[deityPickerOpen,setDeityPickerOpen]=useState(false);
@@ -5291,6 +5341,8 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
   const now=useCurrentTime();
   const todayKey=getLocalDateKeyForLocation(selectedLocation);
   const panchang=getLocationPanchang(todayKey,selectedLocation);
+  const importantToday=getTodayImportantObservanceEntries(selectedLocation);
+  const nextImportantObs=getNextImportantObservance(selectedLocation,45);
   const locationMeta=getLocationMeta(selectedLocation);
   const activeMuh=getActiveMuhurat(now);
   const verse=VERSES[verseIdx];
@@ -5307,6 +5359,56 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
   const[sankalpaInput,setSankalpaInput]=useState(sankalpaText);
   const[sankalpaOpen,setSankalpaOpen]=useState(false);
   const saveSankalpa=(txt)=>{_setSankalpaText(txt);setSankalpaInput(txt);try{localStorage.setItem("vedatime_sankalpa_"+new Date().toDateString(),txt);}catch(e){}};
+
+  useEffect(()=>{
+    if(!smartRemindersEnabled || !importantToday.length) return;
+    if(typeof window==='undefined' || !('Notification' in window) || Notification.permission!=='granted') return;
+    const key=`vedatime_notified_${selectedLocation}_${todayKey}`;
+    try{ if(localStorage.getItem(key)==='true') return; }catch(e){}
+    try{
+      const body=importantToday.map(x=>`${x.icon} ${x.name} — ${x.vedic}${x.tithiEnds?` (ends ${x.tithiEnds})`:""}`).join("\n");
+      new Notification('Today on Vedatime',{body});
+      localStorage.setItem(key,'true');
+    }catch(e){}
+  },[smartRemindersEnabled,selectedLocation,todayKey,importantToday.length]);
+
+  const ImportantTodayBanner=()=>{
+    if(!importantToday.length) return null;
+    return (
+      <div style={{background:'linear-gradient(135deg,rgba(255,123,69,0.22),rgba(244,90,175,0.13),rgba(139,92,246,0.12))',border:'1px solid rgba(255,196,71,0.38)',borderRadius:18,padding:bp==='mobile'?'12px 13px':'14px 16px',marginBottom:14,boxShadow:'0 10px 28px rgba(0,0,0,0.18)',position:'relative',overflow:'hidden'}}>
+        <div style={{position:'absolute',right:-20,top:-24,fontSize:110,opacity:0.07,pointerEvents:'none'}}>🪔</div>
+        <div style={{display:'flex',alignItems:'flex-start',justifyContent:'space-between',gap:12,position:'relative',zIndex:1,flexWrap:'wrap'}}>
+          <div style={{flex:1,minWidth:220}}>
+            <p style={{margin:'0 0 5px',color:S.gold,fontSize:12,fontWeight:900,letterSpacing:1,textTransform:'uppercase'}}>🔔 Important Today · {locationMeta.label}</p>
+            <div style={{display:'grid',gap:6}}>
+              {importantToday.slice(0,3).map(item=>(
+                <div key={item.id} style={{display:'flex',gap:8,alignItems:'center',color:S.text,fontSize:bp==='mobile'?13:14,fontWeight:850,lineHeight:1.45}}>
+                  <span style={{fontSize:18}}>{item.icon}</span>
+                  <span>{item.name}<span style={{color:S.muted,fontWeight:650}}> · {item.vedic}{item.tithiEnds?` · ends ${item.tithiEnds}`:''}</span></span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <button onClick={enableSmartReminders} style={{border:'none',borderRadius:999,padding:'9px 13px',background:smartRemindersEnabled?'linear-gradient(135deg,#22C55E,#3DDC84)':'linear-gradient(135deg,#FF7B45,#FFC447)',color:'#fff',fontSize:12,fontWeight:900,cursor:'pointer',boxShadow:'0 6px 16px rgba(0,0,0,0.20)'}}>{smartRemindersEnabled?'✅ Reminders On':'Enable reminders'}</button>
+        </div>
+      </div>
+    );
+  };
+
+  const NextImportantObservanceCard=()=>{
+    if(!nextImportantObs) return null;
+    return (
+      <div style={{background:'linear-gradient(135deg,rgba(80,200,255,0.10),rgba(255,196,71,0.08))',border:'1px solid rgba(80,200,255,0.24)',borderRadius:16,padding:'12px 15px',marginBottom:14,display:'flex',alignItems:'center',gap:12,boxShadow:'0 8px 22px rgba(0,0,0,0.12)',flexWrap:'wrap'}}>
+        <div style={{width:42,height:42,borderRadius:12,display:'flex',alignItems:'center',justifyContent:'center',background:'rgba(255,255,255,0.08)',fontSize:22}}>{nextImportantObs.icon}</div>
+        <div style={{flex:1,minWidth:180}}>
+          <p style={{margin:0,color:S.blue,fontSize:12,fontWeight:900,letterSpacing:0.8,textTransform:'uppercase'}}>Next Important Observance</p>
+          <p style={{margin:'2px 0 0',color:S.text,fontSize:14.5,fontWeight:900}}>{nextImportantObs.name}</p>
+          <p style={{margin:'2px 0 0',color:S.muted,fontSize:12}}>{nextImportantObs.date} · {nextImportantObs.days===1?'Tomorrow':`${nextImportantObs.days} days away`} · {nextImportantObs.vedic}</p>
+        </div>
+        <button onClick={()=>goTo('calendar')} style={{border:'1px solid '+S.border,borderRadius:999,padding:'8px 12px',background:S.surface,color:S.text,fontSize:12,fontWeight:800,cursor:'pointer'}}>Open Calendar</button>
+      </div>
+    );
+  };
 
   const QuickSettings=()=>(
     <div style={{background:S.card,border:"1px solid "+S.border,borderRadius:20,padding:"14px 16px",marginBottom:14,boxShadow:"0 4px 16px rgba(0,0,0,0.12)"}}>
@@ -5536,6 +5638,8 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
   const Panchang=()=>(
     <>
       <QuickSettings/>
+      <ImportantTodayBanner/>
+      <NextImportantObservanceCard/>
       <div style={{background:S.heroGrad,borderRadius:22,padding:bp==="mobile"?16:18,marginBottom:14,border:"1px solid rgba(255,192,64,0.18)",position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",right:-16,top:-18,fontSize:120,opacity:0.05,pointerEvents:'none',userSelect:'none'}}>✨</div>
         <p style={{color:"rgba(255,255,255,0.58)",fontSize:12,fontWeight:800,letterSpacing:1.1,textTransform:"uppercase",margin:"0 0 8px"}}>Personalized Vedatime</p>
