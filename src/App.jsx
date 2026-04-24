@@ -14869,7 +14869,26 @@ const DAY_MUSIC_CONFIG=[
    ytQ:"Shani dev mantra stotra devotional"},
 ];
 
-function BgMusicPlayer({S}){
+/* Sacred ambient priority engine. The player now chooses music in this order:
+   1) Major festival today, 2) tithi observance today, 3) weekday deity.
+   This keeps the music from feeling like the same track every day and makes
+   Ashtami/Ekadashi/Purnima days feel distinct. */
+const OBSERVANCE_MUSIC_RULES=[
+  {match:/ekadashi|tulsi vivah|dev uthani/i, deity:"Vishnu · Narayana", emoji:"🐚", color:"#4F7CFF", label:"Ekadashi Vishnu Dhun", rootHz:246.94, desc:"Ekadashi observance — Vishnu devotion", ytQ:"Vishnu sahasranama Ekadashi bhajan", audioUrls:["https://archive.org/download/vishnu-mantra-ambient/vishnu_sahasranama.mp3"]},
+  {match:/ashtami|durgashtami|durga|navratri|mahagauri|kalashtami/i, deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Ashtami Devi Dhun", rootHz:349.23, desc:"Ashtami observance — Devi shakti", ytQ:"Durga mantra Ashtami devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
+  {match:/purnima|satyanarayan|guru purnima|raksha bandhan|buddha purnima|kartik purnima/i, deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Purnima Moonlight Dhun", rootHz:261.63, desc:"Purnima observance — calm lunar devotion", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  {match:/pradosh|shivratri|shiva|chaturdashi/i, deity:"Shiva", emoji:"🔱", color:"#87CEEB", label:"Pradosh Shiva Dhun", rootHz:220.00, desc:"Pradosh/Shivratri observance — Shiva dhyan", ytQ:"Om Namah Shivaya Pradosh slow chanting", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  {match:/chaturthi|ganesh|vinayaka|sankashti/i, deity:"Ganesha", emoji:"🐘", color:"#00BB55", label:"Chaturthi Ganesha Mantra", rootHz:392.00, desc:"Chaturthi observance — Ganesha mantra", ytQ:"Ganesh mantra Sankashti Chaturthi devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  {match:/hanuman|tuesday|saturday/i, deity:"Hanuman", emoji:"🙏", color:"#FF4444", label:"Hanuman Strength Dhun", rootHz:329.63, desc:"Hanuman devotion — strength and protection", ytQ:"Hanuman Chalisa slow devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+];
+
+function getAmbientObservanceOverride(observances=[],festival=null){
+  const text=[festival?.name||"", ...(Array.isArray(observances)?observances:[])].join(" · ");
+  if(!text.trim()) return null;
+  return OBSERVANCE_MUSIC_RULES.find(rule=>rule.match.test(text)) || null;
+}
+
+function BgMusicPlayer({S, selectedLocation="austin"}){
   const ctxRef=useRef(null);
   const masterGainRef=useRef(null);
   const [playing,setPlaying]=useState(false);
@@ -14886,17 +14905,23 @@ function BgMusicPlayer({S}){
   const _now=new Date();
   const DOW=_now.getDay();
   const _weekdayCfg=DAY_MUSIC_CONFIG[DOW];
-  // Festival override: on a festival day, use the festival's deity/name for the music label
+  const _todayObs=useMemo(()=>{
+    try { return getTodayObservances(selectedLocation || "austin") || []; }
+    catch(e){ return []; }
+  },[selectedLocation]);
+  // Festival override: on a festival day, use the festival's deity/name for the music label.
   const _todayFest=FESTIVALS.find(f=>f.month===_now.getMonth()&&f.day===_now.getDate());
+  const _obsOverride=getAmbientObservanceOverride(_todayObs,_todayFest);
   const cfg=_todayFest ? {
-    ..._weekdayCfg,
+    ...(_obsOverride || _weekdayCfg),
     deity: _todayFest.name,
-    emoji: _todayFest.icon || _weekdayCfg.emoji,
-    color: _todayFest.color || _weekdayCfg.color,
-    label: `${_todayFest.name} · Today`,
+    emoji: _todayFest.icon || (_obsOverride?.emoji || _weekdayCfg.emoji),
+    color: _todayFest.color || (_obsOverride?.color || _weekdayCfg.color),
+    label: `${_todayFest.name} · Festival Ambient`,
     desc: `Festival-day sacred ambient for ${_todayFest.name}`,
-    ytQ: `${_todayFest.name} devotional bhajan mantra`
-  } : _weekdayCfg;
+    ytQ: `${_todayFest.name} devotional bhajan mantra`,
+    audioUrls: _obsOverride?.audioUrls || _weekdayCfg.audioUrls
+  } : (_obsOverride || _weekdayCfg);
 
   // ── Real audio ambient (loop) ───────────────────────────────
   // Day-specific religious ambient audio — public domain / archive sources
@@ -14920,7 +14945,7 @@ function BgMusicPlayer({S}){
 
   const startAudio = useCallback(() => {
     // Try real audio URLs first; fall back to Web Audio tanpura (always works)
-    const urlsToTry = [...(DOW_AMBIENT[DOW] || []), ...AMBIENT_URLS];
+    const urlsToTry = [...(cfg.audioUrls || DOW_AMBIENT[DOW] || []), ...AMBIENT_URLS];
     let urlIdx = 0;
     let tried = false;
 
@@ -14951,7 +14976,7 @@ function BgMusicPlayer({S}){
 
     if (audioRef.current) { audioRef.current.play().catch(()=>{}); return; }
     tryNextUrl();
-  }, []);
+  }, [DOW, cfg]);
 
   const stopAudio = useCallback(() => {
     if (audioRef.current) {
@@ -15041,6 +15066,15 @@ function BgMusicPlayer({S}){
     setPlaying(false); playingRef.current = false;
     stopAudio();
   };
+
+  // If the sacred context changes while music is playing (date/location/observance),
+  // restart the ambient layer so the new deity/observance actually takes effect.
+  const cfgKey=`${cfg.label}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
+  useEffect(()=>{
+    if(!playingRef.current) return;
+    stopAudio();
+    setTimeout(()=>{ if(playingRef.current) startAudio(); },120);
+  },[cfgKey]);
 
   // Register with AudioEngine for pause/resume coordination
   // IMPORTANT: use gain mute/unmute — NOT handleStop — so the scheduler never dies
@@ -15206,7 +15240,7 @@ function BgMusicPlayer({S}){
         🎬 Today's Bhajan on YouTube
       </a>
       <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 8, margin: "6px 0 0", textAlign: "center" }}>
-        🎶 {playing ? `Sacred ambient for ${DAY_DEITY_LABELS[new Date().getDay()]||"today"} — auto-pauses during media` : "Tap Play for day-based sacred ambient"}
+        🎶 {playing ? `Sacred ambient for ${cfg.deity || DAY_DEITY_LABELS[new Date().getDay()] || "today"} — auto-pauses during media` : "Tap Play for day/observance-based sacred ambient"}
       </p>
       <style>{`
         @keyframes tp0{from{height:4px}to{height:14px}}
@@ -17008,7 +17042,7 @@ export default function App(){
         {/* Global VideoModal — one video player for the entire app, portal-rendered */}
         {globalVideo&&<GlobalVideoModal data={globalVideo} onClose={()=>setGlobalVideo(null)} S={S}/>}
         <NowPlayingBar S={S} bp={bp}/>
-        <BgMusicPlayer S={S}/>
+        <BgMusicPlayer S={S} selectedLocation={selectedLocation}/>
       </div>
     </ErrorBoundary>
   );
