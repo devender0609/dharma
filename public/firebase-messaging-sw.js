@@ -1,5 +1,6 @@
 /* Vedatime Firebase Cloud Messaging service worker.
-   Place at /public/firebase-messaging-sw.js. */
+   Put this file in /public/firebase-messaging-sw.js.
+   IMPORTANT: Replace the firebaseConfig placeholders with the same real values used by your app. */
 
 importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js");
 importScripts("https://www.gstatic.com/firebasejs/10.14.1/firebase-messaging-compat.js");
@@ -31,15 +32,5 @@ messaging.onBackgroundMessage((payload) => {
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
   const url = event.notification?.data?.url || "/";
-  event.waitUntil(
-    clients.matchAll({ type: "window", includeUncontrolled: true }).then((clientList) => {
-      for (const client of clientList) {
-        if ("focus" in client) {
-          client.navigate(url);
-          return client.focus();
-        }
-      }
-      return clients.openWindow(url);
-    })
-  );
+  event.waitUntil(clients.openWindow(url));
 });

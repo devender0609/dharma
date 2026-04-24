@@ -3,11 +3,9 @@ import { doc, setDoc, serverTimestamp } from "firebase/firestore";
 import { auth, db, getVedatimeMessaging } from "./firebase";
 
 const VAPID_KEY =
-  (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_FIREBASE_VAPID_KEY) || "";
+  ((typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_FIREBASE_VAPID_KEY) || "").trim();
 
-try {
-  console.log("[Vedatime reminders] VAPID key loaded:", VAPID_KEY ? `${VAPID_KEY.slice(0, 10)}… (${VAPID_KEY.length} chars)` : "missing");
-} catch (_) {}
+console.info("[Vedatime reminders] VAPID key loaded:", VAPID_KEY ? `${VAPID_KEY.slice(0, 8)}…${VAPID_KEY.slice(-6)}` : "MISSING");
 
 function getClientId() {
   try {
@@ -118,7 +116,6 @@ export async function enableVedatimePushReminders(options = {}) {
 
   try {
     localStorage.setItem("vedatime_push_enabled", "true");
-    localStorage.setItem("vedatime_reminders", "true");
     localStorage.setItem("vedatime_push_token_saved", "true");
     localStorage.setItem("vedatime_last_fcm_token", token);
     localStorage.setItem("vedatime_fcm_token", token);
@@ -155,6 +152,10 @@ export async function disableVedatimePushReminders() {
     );
     localStorage.setItem("vedatime_push_enabled", "false");
     localStorage.setItem("vedatime_reminders", "false");
+    localStorage.removeItem("vedatime_fcm_token");
+    localStorage.removeItem("vedatime_push_token");
+    localStorage.removeItem("fcm_token");
+    localStorage.removeItem("vedatime_last_fcm_token");
     return { ok: true };
   } catch (error) {
     console.warn("[Vedatime reminders] Disable failed:", error?.message || error);
