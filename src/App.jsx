@@ -1366,16 +1366,14 @@ function buildDynamicPanchang(dateKey, locationKey){
   const moon=getMoonPhase(date);
   const isIndia=getLocationMeta(locationKey).tz==="Asia/Kolkata"||getLocationMeta(locationKey).region==="India";
 
-  // Tithi from moon phase
-  const TITHIS=["Amavasya","Pratipada","Dwitiya","Tritiya","Chaturthi","Panchami","Shashthi","Saptami","Ashtami","Navami","Dashami","Ekadashi","Dwadashi","Trayodashi","Chaturdashi","Purnima"];
-  const TITHI_DEITIES=["Pitru","Brahma","Vidhatr","Vishnu","Ganesha","Naga","Kartikeya","Shiva","Durga","Rama","Yama","Vishnu","Yama","Shiva","Shiva","Vishnu"];
-  // pct 0=new moon, 0.5=full moon. Convert to 0-29 tithi index
-  let lunarDay=Math.round(moon.pct*29.5);
-  if(lunarDay>=15){lunarDay=29-lunarDay;}
-  lunarDay=Math.max(0,Math.min(15,lunarDay));
-  const paksha=moon.pct<0.01||moon.pct>0.98?"Krishnapaksha":moon.pct<=0.5?"Shukla Paksha":"Krishna Paksha";
-  const tithiName=TITHIS[lunarDay]||"Panchami";
-  const tithiDeity=TITHI_DEITIES[lunarDay]||"Vishnu";
+  // Tithi from lunar phase. This uses a 30-tithi lunar cycle instead of the older
+  // moon-illumination shortcut, so recurring observances such as Ashtami, Chaturthi,
+  // Ekadashi, Pradosh, Purnima, and Amavasya can be surfaced consistently.
+  const lunarInfo=getLunarTithiInfo(date);
+  const lunarDay=lunarInfo.tithiNumber;
+  const paksha=lunarInfo.paksha;
+  const tithiName=lunarInfo.tithiName;
+  const tithiDeity=lunarInfo.deity;
 
   // Hindu months
   const hinduMonths=["Magha","Phalguna","Chaitra","Vaishakha","Jyeshtha","Ashadha","Shravana","Bhadrapada","Ashwin","Kartik","Margashirsha","Paush"];
@@ -1419,7 +1417,7 @@ function buildDynamicPanchang(dateKey, locationKey){
     samvat:"Vikram Samvat 2082",
     masa:`${hinduMonth} (Approx.)`,
     paksha,
-    tithi:{name:tithiName,number:lunarDay,ends:"Varies",quality:"Auspicious",deity:tithiDeity},
+    tithi:{name:tithiName,number:lunarDay,ends:`~${lunarInfo.approxEndsHours}h from local noon`,quality:"Auspicious",deity:tithiDeity},
     nakshatra:{name:nakshatraName,ends:"Varies",quality:"Sacred",deity:wd.ruler,pada:"1st"},
     yoga:{name:"Saubhagya",ends:"End of day"},
     karana:{morning:"Bava",evening:"Balava"},
@@ -1432,7 +1430,9 @@ function buildDynamicPanchang(dateKey, locationKey){
     moonPhase:moon.name,moonPct:Math.round(moon.pct*100),
     rashi:"Mithuna (Gemini)",rashiLord:"Mercury",
     weekdayRuler:wd.ruler,luckyColor:wd.lucky,luckyNumber:wd.num,
-    todayObservances:[tithiName+" — "+paksha],
+    todayObservances:getImportantTithiObservanceNames({tithiName,paksha}).length
+      ? getImportantTithiObservanceNames({tithiName,paksha})
+      : [`${paksha} ${tithiName}`],
     locationMode:isIndia?"india":"global",
     isDynamic:true,
   };
@@ -1440,13 +1440,13 @@ function buildDynamicPanchang(dateKey, locationKey){
 
 function getLocationPanchang(dateKey, locationKey) {
   const dayMap = LOCATION_PANCHANG[dateKey] || {};
-  if (dayMap[locationKey]) return dayMap[locationKey];
-  if (dateKey === "2026-03-26" && getLocationMeta(locationKey).region === "India") return INDIA_RAM_NAVAMI;
-  if (dateKey === "2026-03-25" && getLocationMeta(locationKey).region === "India") return INDIA_PANCHANG;
-  if (dateKey === "2026-03-25") return PANCHANG;
-  if (dayMap.austin) return dayMap.austin; // fallback to any city on same date
+  if (dayMap[locationKey]) return enrichPanchangWithRecurringObservances(dayMap[locationKey], dateKey, locationKey);
+  if (dateKey === "2026-03-26" && getLocationMeta(locationKey).region === "India") return enrichPanchangWithRecurringObservances(INDIA_RAM_NAVAMI, dateKey, locationKey);
+  if (dateKey === "2026-03-25" && getLocationMeta(locationKey).region === "India") return enrichPanchangWithRecurringObservances(INDIA_PANCHANG, dateKey, locationKey);
+  if (dateKey === "2026-03-25") return enrichPanchangWithRecurringObservances(PANCHANG, dateKey, locationKey);
+  if (dayMap.austin) return enrichPanchangWithRecurringObservances(dayMap.austin, dateKey, locationKey); // fallback to any city on same date
   // Dynamic fallback for all other dates — computed from moon phase
-  return buildDynamicPanchang(dateKey, locationKey);
+  return enrichPanchangWithRecurringObservances(buildDynamicPanchang(dateKey, locationKey), dateKey, locationKey);
 }
 
 function getLocationMeta(locationKey){
@@ -3647,6 +3647,13 @@ const IMPORTANT_DATES=[
   {month:11,day:26,name:"चतुर्थी व्रत",icon:"\ud83d\udc18",color:"#FF7043",type:"vrat",source:"uploaded_calendar_ocr",desc:"December 2026 printed calendar entry."},
   {month:11,day:31,name:"कालाष्टमी",icon:"\ud83e\ude94",color:"#FFB300",type:"festival",source:"uploaded_calendar_ocr",desc:"December 2026 printed calendar entry."},
 ];
+
+// Auto-generated monthly tithi observances for the calendar.
+// This layer prevents important recurring dates from being missed, including
+// Ashtami, Chaturthi, Shashthi, Ekadashi, Pradosh, Masik Shivratri, Purnima, and Amavasya.
+const RECURRING_OBSERVANCE_DATES=buildRecurringObservanceDates(2026,"austin");
+IMPORTANT_DATES.push(...RECURRING_OBSERVANCE_DATES);
+
 const IMPORTANT_DATE_MAP={};
 IMPORTANT_DATES.forEach(item=>{
   const key=item.month+"-"+item.day;
@@ -4682,20 +4689,111 @@ const DEITIES_OF_DAY=[
   {day:6,name:"Shani",emoji:"🪐",mantra:"Om Shanaischaraya Namah",color:"#64748B",desc:"Saturday is Shani Deva's day. Offer mustard oil lamps, black sesame, blue flowers and feed the poor. Recite Shani Stotra or visit Hanuman temple (as Hanuman appeases Shani).",significance:"Shani rules karma, justice and discipline. Saturday worship removes fear of Shani's effects and builds patience and wisdom."},
 ];
 
-function getMoonPhase(date){
+function getLunarTithiInfo(date){
   const synodicMonth=29.530588853;
   const reference=new Date("2000-01-06T18:14:00Z");
   const days=(date-reference)/(1000*60*60*24);
-  const phase=((days%synodicMonth)+synodicMonth)%synodicMonth;
-  if(phase<1||phase>28.5)return{name:"Amavasya",emoji:"🌑",pct:0,significance:"New Moon — most powerful for Pitru puja, Shiva meditation and new resolutions. Avoid auspicious ceremonies.",color:"#1E293B"};
-  if(phase<3.7)return{name:"Pratipada",emoji:"🌒",pct:8,significance:"Shukla Pratipada — fresh beginning of the lunar fortnight. Excellent for new ventures.",color:"#475569"};
-  if(phase<7.4)return{name:"Panchami–Saptami",emoji:"🌓",pct:35,significance:"First quarter — growing energy for undertaking work, studies and projects.",color:"#64748B"};
-  if(phase<11.1)return{name:"Dashami–Ekadashi",emoji:"🌔",pct:70,significance:"Ekadashi is highly auspicious — fast on this day for Vishnu's blessings and spiritual merit.",color:"#94A3B8"};
-  if(phase<15.7)return{name:"Purnima",emoji:"🌕",pct:100,significance:"Full Moon — the holiest day of the lunar month. Ideal for Satyanarayan Katha, Lakshmi puja and ancestral offerings.",color:"#FCD34D"};
-  if(phase<18.4)return{name:"Shodashi–Ashtami (K)",emoji:"🌖",pct:75,significance:"Krishna paksha begins — good for inner work, meditation and healing rituals.",color:"#94A3B8"};
-  if(phase<22.1)return{name:"Krishna Ekadashi",emoji:"🌗",pct:45,significance:"Krishna Paksha Ekadashi — equally potent for Vishnu fast as Shukla Ekadashi.",color:"#64748B"};
-  if(phase<25.8)return{name:"Trayodashi–Chaturdashi",emoji:"🌘",pct:15,significance:"Pradosh Kaal approaching — Pradosh fast on Trayodashi is auspicious for Shiva.",color:"#475569"};
-  return{name:"Chaturdashi",emoji:"🌑",pct:5,significance:"Masik Shivaratri — fast and worship Shiva on every Chaturdashi of Krishna Paksha.",color:"#1E293B"};
+  const phase=((days%synodicMonth)+synodicMonth)%synodicMonth; // 0=new moon, ~14.77=full moon
+  const tithiIndex=Math.min(30,Math.max(1,Math.floor(phase/(synodicMonth/30))+1)); // 1..30
+  const tithiNumber=((tithiIndex-1)%15)+1;
+  const paksha=tithiIndex<=15?"Shukla Paksha":"Krishna Paksha";
+  const names=["Pratipada","Dwitiya","Tritiya","Chaturthi","Panchami","Shashthi","Saptami","Ashtami","Navami","Dashami","Ekadashi","Dwadashi","Trayodashi","Chaturdashi","Purnima"];
+  const krishnaNames=["Pratipada","Dwitiya","Tritiya","Chaturthi","Panchami","Shashthi","Saptami","Ashtami","Navami","Dashami","Ekadashi","Dwadashi","Trayodashi","Chaturdashi","Amavasya"];
+  const deities=["Brahma","Vidhatr","Vishnu","Ganesha","Naga","Kartikeya","Surya","Durga","Rama","Yama","Vishnu","Vishnu","Shiva","Shiva","Vishnu"];
+  const tithiName=(tithiIndex<=15?names[tithiNumber-1]:krishnaNames[tithiNumber-1])||"Pratipada";
+  const illumination=(1-Math.cos((2*Math.PI*phase)/synodicMonth))/2; // 0..1
+  const tithiProgress=((phase%(synodicMonth/30))/(synodicMonth/30));
+  const approxEndsHours=Math.max(1,Math.round((1-tithiProgress)*(synodicMonth/30)*24));
+  return {phase,tithiIndex,tithiNumber,tithiName,paksha,deity:deities[tithiNumber-1]||"Vishnu",illumination,approxEndsHours};
+}
+
+function getImportantTithiObservanceNames({tithiName,paksha}){
+  const shukla=paksha==="Shukla Paksha";
+  const krishna=paksha==="Krishna Paksha";
+  const base=`${paksha} ${tithiName}`;
+  const rows=[];
+  if(tithiName==="Chaturthi") rows.push(shukla?"Vinayaka Chaturthi":"Sankashti Chaturthi");
+  if(tithiName==="Panchami") rows.push(`${base} observance`);
+  if(tithiName==="Shashthi") rows.push(shukla?"Skanda Shashthi":"Shashthi observance");
+  if(tithiName==="Saptami") rows.push(shukla?"Surya Saptami":"Saptami observance");
+  if(tithiName==="Ashtami") rows.push(shukla?"Masik Durgashtami / Shukla Ashtami":"Kalashtami / Krishna Ashtami");
+  if(tithiName==="Navami") rows.push(`${base} observance`);
+  if(tithiName==="Ekadashi") rows.push(`${base} Vrat`);
+  if(tithiName==="Trayodashi") rows.push(`Pradosh Vrat (${paksha})`);
+  if(tithiName==="Chaturdashi") rows.push(krishna?"Masik Shivratri":"Shukla Chaturdashi");
+  if(tithiName==="Purnima") rows.push("Purnima Vrat");
+  if(tithiName==="Amavasya") rows.push("Amavasya / Pitru Tarpan");
+  return rows;
+}
+
+function enrichPanchangWithRecurringObservances(panchang,dateKey,locationKey){
+  if(!panchang) return panchang;
+  const tithiName=panchang.tithi?.name || getLunarTithiInfo(new Date((dateKey||getLocalDateKeyForLocation(locationKey||"austin"))+"T12:00:00")).tithiName;
+  const paksha=panchang.paksha || getLunarTithiInfo(new Date((dateKey||getLocalDateKeyForLocation(locationKey||"austin"))+"T12:00:00")).paksha;
+  const recurring=getImportantTithiObservanceNames({tithiName,paksha});
+  const existing=Array.isArray(panchang.todayObservances)?panchang.todayObservances:[];
+  const merged=[...existing];
+  recurring.forEach(x=>{ if(!merged.some(y=>String(y).toLowerCase()===String(x).toLowerCase())) merged.push(x); });
+  if(!merged.length) merged.push(`${paksha} ${tithiName}`);
+  return {...panchang,todayObservances:merged};
+}
+
+function getRecurringObservanceEntriesForDate(dateKey, locationKey="austin"){
+  const date=new Date(dateKey+"T12:00:00");
+  const info=getLunarTithiInfo(date);
+  const names=getImportantTithiObservanceNames(info);
+  const month=date.getMonth();
+  const day=date.getDate();
+  const colorMap={
+    "Chaturthi":"#FF8C00","Ashtami":"#E91E8C","Ekadashi":"#5BA4F5","Trayodashi":"#8B5CF6",
+    "Chaturdashi":"#8B5CF6","Purnima":"#FFB300","Amavasya":"#64748B","Shashthi":"#10B981",
+    "Saptami":"#F97316","Navami":"#FF6B2C","Panchami":"#22C55E"
+  };
+  const iconMap={
+    "Chaturthi":"🐘","Ashtami":"🪷","Ekadashi":"🌙","Trayodashi":"🔱","Chaturdashi":"🔱",
+    "Purnima":"🌕","Amavasya":"🌑","Shashthi":"🦚","Saptami":"☀️","Navami":"🏹","Panchami":"🐍"
+  };
+  return names.map((name,idx)=>({
+    id:`recurring-${dateKey}-${idx}`,
+    name,
+    month,
+    day,
+    date:date.toLocaleDateString("en-US",{month:"short",day:"2-digit"}),
+    icon:iconMap[info.tithiName]||"🪔",
+    color:colorMap[info.tithiName]||"#FFB300",
+    type:"Tithi observance",
+    source:"recurring",
+    region:"Location-aware",
+    desc:`${info.paksha} ${info.tithiName}. Recurring tithi-based observance added by Vedatime so important monthly dates do not disappear from the calendar.`,
+    howTo:"Observe with the appropriate vrata or puja for the tithi, keep a simple sankalp, chant the related deity mantra, and confirm exact local timing when performing a formal ritual.",
+    vedic:`${info.paksha} ${info.tithiName}`,
+  }));
+}
+
+function buildRecurringObservanceDates(year=2026, locationKey="austin"){
+  const out=[];
+  for(let m=0;m<12;m++){
+    const days=new Date(year,m+1,0).getDate();
+    for(let d=1;d<=days;d++){
+      const dateKey=`${year}-${String(m+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`;
+      out.push(...getRecurringObservanceEntriesForDate(dateKey, locationKey));
+    }
+  }
+  return out;
+}
+
+/* ── Moon Phase + Deity of Day data ── */
+function getMoonPhase(date){
+  const info=getLunarTithiInfo(date);
+  const pct=info.illumination;
+  let name="Waxing Crescent", emoji="🌒", significance="Growing Moon — supportive for starting and building spiritual practices.", color="#64748B";
+  if(info.tithiName==="Amavasya"){name="Amavasya";emoji="🌑";significance="New Moon — powerful for Pitru puja, Shiva meditation and new resolutions. Avoid major auspicious ceremonies.";color="#1E293B";}
+  else if(info.tithiName==="Purnima"){name="Purnima";emoji="🌕";significance="Full Moon — ideal for Satyanarayan Katha, Lakshmi puja, meditation and dana.";color="#FCD34D";}
+  else if(info.paksha==="Shukla Paksha" && info.tithiNumber<8){name="Waxing Crescent";emoji="🌒";color="#64748B";}
+  else if(info.paksha==="Shukla Paksha" && info.tithiNumber<15){name="Waxing Gibbous";emoji="🌔";color="#94A3B8";}
+  else if(info.paksha==="Krishna Paksha" && info.tithiNumber<8){name="Waning Gibbous";emoji="🌖";color="#94A3B8";}
+  else if(info.paksha==="Krishna Paksha"){name="Waning Crescent";emoji="🌘";color="#475569";}
+  return {...info,name,emoji,pct,significance,color};
 }
 
 /* ── Festival Alert Banner ── */

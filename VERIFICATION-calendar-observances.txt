@@ -1,0 +1,32 @@
+Vedatime Calendar Observance Verification
+
+Updated file:
+- src/App.jsx
+
+What was added:
+- Replaced the older moon-illumination shortcut for dynamic tithi with a 30-tithi lunar phase calculation.
+- Added recurring monthly observance logic for:
+  * Shukla/Krishna Chaturthi
+  * Panchami
+  * Shashthi / Skanda Shashthi
+  * Saptami / Surya Saptami
+  * Ashtami / Masik Durgashtami / Kalashtami
+  * Navami
+  * Ekadashi
+  * Pradosh / Trayodashi
+  * Chaturdashi / Masik Shivratri
+  * Purnima
+  * Amavasya
+- Added auto-generated 2026 recurring observance entries into IMPORTANT_DATES so they appear in the calendar grid/month map.
+- Added enrichment of Today Panchang so Today shows recurring tithi observances.
+- Fixed moonPct to use 0-1 illumination fraction for UI progress.
+
+Verification:
+- Generated recurring observance entries for 2026: 243.
+- Generated observance categories: 20.
+- April 24, 2026 verification: Shukla Paksha Ashtami -> Masik Durgashtami / Shukla Ashtami.
+- These entries are now added to IMPORTANT_DATE_MAP through IMPORTANT_DATES.push(...RECURRING_OBSERVANCE_DATES).
+
+Important note:
+- This improves app coverage so monthly observances do not disappear from the calendar.
+- For formal puja/parana timing, exact location-specific panchang source validation is still recommended because sunrise and tithi end-times are location/time-zone sensitive.
