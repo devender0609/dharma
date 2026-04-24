@@ -4,12 +4,12 @@ import { getFirestore } from "firebase/firestore";
 import { getMessaging, isSupported as isMessagingSupported } from "firebase/messaging";
 
 const firebaseConfig = {
-  apiKey: (import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY) || "PASTE_YOUR_REAL_FIREBASE_API_KEY_HERE",
+  apiKey: (import.meta.env && import.meta.env.VITE_FIREBASE_API_KEY) || "AIzaSyCFc7ogpQ6kZUMkyP2XAQFUIom-WBXe8QE",
   authDomain: (import.meta.env && import.meta.env.VITE_FIREBASE_AUTH_DOMAIN) || "vedatime-37e37.firebaseapp.com",
   projectId: (import.meta.env && import.meta.env.VITE_FIREBASE_PROJECT_ID) || "vedatime-37e37",
   storageBucket: (import.meta.env && import.meta.env.VITE_FIREBASE_STORAGE_BUCKET) || "vedatime-37e37.appspot.com",
-  messagingSenderId: (import.meta.env && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || "PASTE_YOUR_REAL_MESSAGING_SENDER_ID_HERE",
-  appId: (import.meta.env && import.meta.env.VITE_FIREBASE_APP_ID) || "PASTE_YOUR_REAL_APP_ID_HERE",
+  messagingSenderId: (import.meta.env && import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID) || "377861968808",
+  appId: (import.meta.env && import.meta.env.VITE_FIREBASE_APP_ID) || "1:377861968808:web:4382e975212abc62b4039d",
 };
 
 const app = initializeApp(firebaseConfig);
