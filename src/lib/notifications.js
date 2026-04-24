@@ -5,6 +5,10 @@ import { auth, db, getVedatimeMessaging } from "./firebase";
 const VAPID_KEY =
   (typeof import.meta !== "undefined" && import.meta.env && import.meta.env.VITE_FIREBASE_VAPID_KEY) || "";
 
+try {
+  console.log("[Vedatime reminders] VAPID key loaded:", VAPID_KEY ? `${VAPID_KEY.slice(0, 10)}… (${VAPID_KEY.length} chars)` : "missing");
+} catch (_) {}
+
 function getClientId() {
   try {
     let id = localStorage.getItem("vedatime_client_id");
@@ -114,8 +118,12 @@ export async function enableVedatimePushReminders(options = {}) {
 
   try {
     localStorage.setItem("vedatime_push_enabled", "true");
+    localStorage.setItem("vedatime_reminders", "true");
     localStorage.setItem("vedatime_push_token_saved", "true");
     localStorage.setItem("vedatime_last_fcm_token", token);
+    localStorage.setItem("vedatime_fcm_token", token);
+    localStorage.setItem("vedatime_push_token", token);
+    localStorage.setItem("fcm_token", token);
   } catch (_) {}
 
   try {
