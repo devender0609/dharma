@@ -9,6 +9,7 @@ import {
   signOut
 } from "firebase/auth";
 import { openExternal, isNativeApp, initNativeShell } from "./lib/native";
+import { enableVedatimePushReminders, disableVedatimePushReminders } from "./lib/notifications";
 
 /* ══════════════════════════════════════════════════════
    ERROR BOUNDARY — catches any render crash and shows it
@@ -5327,6 +5328,16 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
       setSmartRemindersEnabled(true);
       try{ localStorage.setItem('vedatime_reminders','true'); }catch(e){}
       try{
+        await enableVedatimePushReminders({
+          location: selectedLocation,
+          interests: userInterests,
+          observanceTypes: ['ashtami','ekadashi','pradosh','purnima','amavasya','chaturthi','shashthi','navami'],
+          source: 'today-screen'
+        });
+      }catch(e){
+        try{ console.warn('[Vedatime reminders] Push setup skipped:', e?.message || e); }catch(_){}
+      }
+      try{
         const obs=getTodayImportantObservanceEntries(selectedLocation);
         const body=obs.length
           ? obs.map(x=>`${x.icon} ${x.name} — ${x.vedic}${x.tithiEnds?` (ends ${x.tithiEnds})`:""}`).join("\n")
@@ -5713,7 +5724,7 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
             <p style={{color:S.text,fontSize:14,fontWeight:800,margin:'0 0 4px'}}>Festival, muhurat, and daily practice nudges</p>
             <p style={{color:S.muted,fontSize:12,margin:0,lineHeight:1.7}}>{smartRemindersEnabled?'Browser reminders are enabled where supported.':'Turn on browser notifications for lightweight reminders.'}</p>
           </div>
-          <button onClick={smartRemindersEnabled?()=>{setSmartRemindersEnabled(false); try{localStorage.setItem('vedatime_reminders','false')}catch(e){}}:enableSmartReminders} style={{padding:'6px 10px',borderRadius:11,border:'none',background:smartRemindersEnabled?'linear-gradient(135deg,#22C55E,#3DDC84)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersEnabled?'✅ Enabled':'Enable reminders'}</button>
+          <button onClick={smartRemindersEnabled?async()=>{setSmartRemindersEnabled(false); try{localStorage.setItem('vedatime_reminders','false')}catch(e){} try{await disableVedatimePushReminders();}catch(e){}}:enableSmartReminders} style={{padding:'6px 10px',borderRadius:11,border:'none',background:smartRemindersEnabled?'linear-gradient(135deg,#22C55E,#3DDC84)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersEnabled?'✅ Enabled':'Enable reminders'}</button>
         </div>
       </Card>
       <Card S={S} style={{marginBottom:14,background:'linear-gradient(135deg,rgba(255,112,64,0.08),rgba(255,192,64,0.05))',border:'1px solid rgba(255,112,64,0.2)'}}>
