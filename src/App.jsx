@@ -5334,8 +5334,14 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
       });
       if(result?.ok && result?.token){
         setSmartRemindersEnabled(true);
-        setReminderSetupStatus('✅ Reminders enabled. Test token saved.');
-        try{ localStorage.setItem('vedatime_reminders','true'); localStorage.setItem('vedatime_fcm_token', result.token); }catch(e){}
+        setReminderSetupStatus('✅ Reminders enabled.');
+        try{
+          localStorage.setItem('vedatime_reminders','true');
+          localStorage.setItem('vedatime_push_enabled','true');
+          localStorage.setItem('vedatime_fcm_token', result.token);
+          localStorage.setItem('vedatime_push_token', result.token);
+          localStorage.setItem('fcm_token', result.token);
+        }catch(e){}
         try{
           const obs=getTodayImportantObservanceEntries(selectedLocation);
           const body=obs.length
@@ -5346,7 +5352,7 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
       }else{
         setSmartRemindersEnabled(false);
         setReminderSetupStatus(`⚠️ Reminder setup failed: ${result?.reason || 'unknown error'}`);
-        try{ localStorage.setItem('vedatime_reminders','false'); }catch(e){}
+        try{ localStorage.setItem('vedatime_reminders','false'); localStorage.setItem('vedatime_push_enabled','false'); }catch(e){}
         try{ console.warn('[Vedatime reminders] Setup failed:', result); }catch(_){}
       }
     }catch(e){
@@ -5354,6 +5360,25 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
       setReminderSetupStatus(`⚠️ Reminder setup failed: ${e?.message || e}`);
       try{ console.error('[Vedatime reminders] Setup error:', e); }catch(_){}
     }
+  };
+
+  const disableSmartReminders=async()=>{
+    setReminderSetupStatus('Disabling reminders…');
+    try{
+      await disableVedatimePushReminders();
+    }catch(e){
+      try{ console.warn('[Vedatime reminders] Disable error:', e); }catch(_){}
+    }
+    try{
+      localStorage.setItem('vedatime_reminders','false');
+      localStorage.setItem('vedatime_push_enabled','false');
+      localStorage.removeItem('vedatime_fcm_token');
+      localStorage.removeItem('vedatime_push_token');
+      localStorage.removeItem('fcm_token');
+      localStorage.removeItem('vedatime_last_fcm_token');
+    }catch(e){}
+    setSmartRemindersEnabled(false);
+    setReminderSetupStatus('✅ Reminders disabled in Vedatime. Browser permission may still show as allowed in site settings.');
   };
   const[deityPickerOpen,setDeityPickerOpen]=useState(false);
   const[actionExpanded,setActionExpanded]=useState(false); // V100: stable state for DailyActionEngine
@@ -5409,7 +5434,6 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
               ))}
             </div>
           </div>
-          <span style={{border:'1px solid '+S.border,borderRadius:999,padding:'9px 13px',background:S.surface,color:S.text,fontSize:12,fontWeight:900,boxShadow:'0 6px 16px rgba(0,0,0,0.20)'}}>🔔 Reminders available below</span>
         </div>
       </div>
     );
@@ -5731,9 +5755,9 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
         <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'center',flexWrap:'wrap'}}>
           <div>
             <p style={{color:S.text,fontSize:14,fontWeight:800,margin:'0 0 4px'}}>Festival, muhurat, and daily practice nudges</p>
-            <p style={{color:S.muted,fontSize:12,margin:0,lineHeight:1.7}}>{smartRemindersEnabled?'Browser reminders are enabled where supported.':'Turn on browser notifications for lightweight reminders.'}</p>{reminderSetupStatus&&<p style={{color:reminderSetupStatus.startsWith('✅')?S.green:S.gold,fontSize:11.5,margin:'6px 0 0',fontWeight:800}}>{reminderSetupStatus}</p>}
+            <p style={{color:S.muted,fontSize:12,margin:0,lineHeight:1.7}}>{smartRemindersEnabled?'Browser reminders are enabled. Click Disable reminders to turn them off in Vedatime.':'Turn on browser notifications for lightweight reminders.'}</p>{reminderSetupStatus&&<p style={{color:reminderSetupStatus.startsWith('✅')?S.green:S.gold,fontSize:11.5,margin:'6px 0 0',fontWeight:800}}>{reminderSetupStatus}</p>}
           </div>
-          <button onClick={smartRemindersEnabled?async()=>{setSmartRemindersEnabled(false); setReminderSetupStatus('Reminders disabled.'); try{localStorage.setItem('vedatime_reminders','false'); localStorage.removeItem('vedatime_fcm_token'); localStorage.removeItem('vedatime_push_token'); localStorage.removeItem('fcm_token'); localStorage.removeItem('vedatime_last_fcm_token');}catch(e){} try{await disableVedatimePushReminders();}catch(e){}}:enableSmartReminders} style={{padding:'6px 10px',borderRadius:11,border:'none',background:smartRemindersEnabled?'linear-gradient(135deg,#22C55E,#3DDC84)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersEnabled?'✅ Enabled':'Enable reminders'}</button>
+          <button onClick={smartRemindersEnabled?disableSmartReminders:enableSmartReminders} style={{padding:'7px 12px',borderRadius:11,border:'none',background:smartRemindersEnabled?'linear-gradient(135deg,#EF4444,#FF7040)':'linear-gradient(135deg,#8B5CF6,#FF7040)',color:'#fff',fontSize:11.5,fontWeight:800,cursor:'pointer',boxShadow:'0 2px 8px rgba(0,0,0,0.16)'}}>{smartRemindersEnabled?'Disable reminders':'Enable reminders'}</button>
         </div>
       </Card>
       <Card S={S} style={{marginBottom:14,background:'linear-gradient(135deg,rgba(255,112,64,0.08),rgba(255,192,64,0.05))',border:'1px solid rgba(255,112,64,0.2)'}}>
