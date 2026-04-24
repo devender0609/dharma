@@ -129,6 +129,7 @@ export async function enableVedatimePushReminders(options = {}) {
       "ekadashi",
       "pradosh",
       "purnima",
+      "muhurat",
       "amavasya",
       "chaturthi",
       "shashthi",
