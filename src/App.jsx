@@ -14946,10 +14946,12 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const [playing,setPlaying]=useState(false);
   const [minimized,setMinimized]=useState(false);
   const [ambientMode,setAmbientMode]=useState(()=>{ try{return localStorage.getItem("vedatime_ambient_mode")||"auto";}catch(e){return"auto";} });
-  const [volume,setVolume]=useState(()=>{ try{return Number(localStorage.getItem("vedatime_ambient_volume")||"0.32");}catch(e){return 0.32;} });
+  const [volume,setVolume]=useState(()=>{ try{const v=Number(localStorage.getItem("vedatime_ambient_volume")||"0.38"); return Number.isFinite(v)?Math.max(0,Math.min(0.85,v)):0.38;}catch(e){return 0.38;} });
   const [dragPos,setDragPos]=useState({x:12,y:typeof window!=="undefined"?Math.max(60,window.innerHeight-260):500});
+  const [status,setStatus]=useState("ready");
   const audioRef=useRef(null);
   const fadeTimerRef=useRef(null);
+  const fallbackRef=useRef({ctx:null,timer:null,gain:null});
   const draggingRef=useRef(false);
   const dragStartRef=useRef({x:0,y:0,px:0,py:0});
 
@@ -14958,76 +14960,131 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const todayFest=FESTIVALS.find(f=>f.month===now.getMonth()&&f.day===now.getDate());
   const todayObs=useMemo(()=>{ try { return getTodayObservances(selectedLocation || "austin") || []; } catch(e){ return []; } },[selectedLocation]);
   const cfg=getPremiumAmbientConfig({now, weekdayCfg, festival:todayFest, observances:todayObs, userMode:ambientMode});
-  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz||261.63}`;
+  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz||261.63}|${selectedLocation}`;
 
-  const getTrackPattern=(id)=>{
-    const patterns={
-      shiva:{wave:"triangle", bpm:74, notes:[0.5,0.75,1,0.75,0.5,1.5,1,0.75], bass:[0.5,0.5,0.75,0.5], bell:[0,4]},
-      hanuman:{wave:"square", bpm:96, notes:[1,1.25,1.5,2,1.5,1.25,1,0.75], bass:[0.5,0.75,0.5,0.75], bell:[1.5,5.5]},
-      ganesha:{wave:"triangle", bpm:84, notes:[1,1.125,1.25,1.5,1.25,1.125,1,1.5], bass:[0.5,1,0.5,1], bell:[0,3.8,6.8]},
-      vishnu:{wave:"sine", bpm:78, notes:[1,1.125,1.333,1.5,1.333,1.125,1,0.75], bass:[0.5,0.75,1,0.75], bell:[2.8]},
-      lakshmi:{wave:"sine", bpm:88, notes:[1.5,1.333,1.25,1.125,1,1.125,1.25,1.5], bass:[0.75,1,0.75,1], bell:[0,2.6,5.2]},
-      devi:{wave:"triangle", bpm:92, notes:[1,1.2,1.5,1.8,1.5,1.2,1,1.5], bass:[0.5,1,0.5,1.2], bell:[0.6,3.2,6]},
-      krishna:{wave:"sine", bpm:82, notes:[1,1.125,1.25,1.5,1.875,1.5,1.25,1.125], bass:[0.5,0.75,0.5,1], bell:[3.4]},
-      surya:{wave:"sine", bpm:96, notes:[1,1.25,1.5,2,2.25,2,1.5,1.25], bass:[0.75,1,0.75,1.25], bell:[0,2,4,6]},
-      meditation:{wave:"sine", bpm:62, notes:[0.5,0.75,1,1.5,1,0.75], bass:[0.5,0.5,0.75,0.5], bell:[4.5]},
-      auto:{wave:"sine", bpm:76, notes:[0.75,1,1.125,1.5,1.125,1,0.75,1], bass:[0.5,0.75,0.5,1], bell:[2,6]}
-    };
-    return patterns[id] || patterns.auto;
+  const audioIdFromCfg=(track)=>{
+    const raw=`${track?.id||""} ${track?.deity||""} ${track?.label||""} ${track?.reason||""}`.toLowerCase();
+    if(raw.includes("shiva")||raw.includes("shivratri")||raw.includes("pradosh")) return "shiva";
+    if(raw.includes("hanuman")||raw.includes("shani")) return "hanuman";
+    if(raw.includes("ganesha")||raw.includes("ganesh")||raw.includes("chaturthi")) return "ganesha";
+    if(raw.includes("vishnu")||raw.includes("narayana")||raw.includes("ekadashi")||raw.includes("guru")) return "vishnu";
+    if(raw.includes("lakshmi")||raw.includes("diwali")||raw.includes("aarti")) return "lakshmi";
+    if(raw.includes("devi")||raw.includes("durga")||raw.includes("navratri")||raw.includes("ashtami")) return "devi";
+    if(raw.includes("krishna")||raw.includes("purnima")||raw.includes("moon")||raw.includes("janmashtami")) return "krishna";
+    if(raw.includes("surya")||raw.includes("rama")||raw.includes("morning")||raw.includes("abhijit")) return "surya";
+    if(raw.includes("meditation")||raw.includes("brahma")||raw.includes("night")) return "meditation";
+    return ambientMode && ambientMode!=="auto" ? ambientMode : "auto";
+  };
+  const trackId=audioIdFromCfg(cfg);
+  const trackSrc=`/ambient/${trackId}.wav`;
+
+  const stopFallback=()=>{
+    const fb=fallbackRef.current;
+    if(fb.timer){ clearInterval(fb.timer); fb.timer=null; }
+    if(fb.gain){ try{fb.gain.gain.setTargetAtTime(0, fb.ctx.currentTime, 0.12);}catch(e){} }
+    if(fb.ctx){ const ctx=fb.ctx; setTimeout(()=>{ try{ctx.close();}catch(e){} },250); }
+    fallbackRef.current={ctx:null,timer:null,gain:null};
   };
 
-  const makeAmbientWavDataUrl=(track)=>{
-    const sampleRate=22050, seconds=8, total=sampleRate*seconds;
-    const root=track.rootHz || 261.63, pattern=getTrackPattern(track.id || "auto"), beat=60/pattern.bpm;
-    const data=new Int16Array(total);
-    const env=(x,dur)=>{ const a=Math.min(0.08,dur*0.18), r=Math.min(0.28,dur*0.35); if(x<a) return x/a; if(x>dur-r) return Math.max(0,(dur-x)/r); return 1; };
-    const osc=(phase,wave)=> wave==="square" ? (Math.sin(phase)>=0?0.65:-0.65) : wave==="triangle" ? (2/Math.PI)*Math.asin(Math.sin(phase)) : Math.sin(phase);
-    for(let i=0;i<total;i++){
-      const t=i/sampleRate; let sample=0;
-      sample += Math.sin(2*Math.PI*root*0.5*t)*0.045*(0.65+0.35*Math.sin(2*Math.PI*0.12*t));
-      sample += Math.sin(2*Math.PI*root*0.75*t)*0.025*(0.5+0.5*Math.sin(2*Math.PI*0.09*t+1.2));
-      pattern.notes.forEach((mul,idx)=>{ const start=idx*beat, dur=beat*0.72, x=t-start; if(x>=0&&x<dur){ const f=root*mul*(track.id==="krishna"?2:1.5); sample += osc(2*Math.PI*f*x,pattern.wave)*0.18*env(x,dur); sample += Math.sin(2*Math.PI*f*2*x)*0.035*env(x,dur); } });
-      pattern.bass.forEach((mul,idx)=>{ const start=idx*beat*2, dur=beat*0.9, x=t-start; if(x>=0&&x<dur){ sample += Math.sin(2*Math.PI*root*mul*x)*0.10*env(x,dur); } });
-      pattern.bell.forEach(start=>{ const x=t-start; if(x>=0&&x<1.5){ const decay=Math.exp(-2.6*x); sample += Math.sin(2*Math.PI*root*3.02*x)*0.12*decay; sample += Math.sin(2*Math.PI*root*4.13*x)*0.06*decay; } });
-      data[i]=Math.round(Math.max(-0.92,Math.min(0.92,sample))*32767);
-    }
-    const bytes=new Uint8Array(44+data.length*2), view=new DataView(bytes.buffer);
-    const write=(offset,str)=>{ for(let i=0;i<str.length;i++) bytes[offset+i]=str.charCodeAt(i); };
-    write(0,"RIFF"); view.setUint32(4,36+data.length*2,true); write(8,"WAVE"); write(12,"fmt ");
-    view.setUint32(16,16,true); view.setUint16(20,1,true); view.setUint16(22,1,true); view.setUint32(24,sampleRate,true);
-    view.setUint32(28,sampleRate*2,true); view.setUint16(32,2,true); view.setUint16(34,16,true); write(36,"data"); view.setUint32(40,data.length*2,true);
-    let o=44; for(let i=0;i<data.length;i++,o+=2) view.setInt16(o,data[i],true);
-    let binary=""; const chunk=0x8000;
-    for(let i=0;i<bytes.length;i+=chunk) binary+=String.fromCharCode.apply(null,bytes.subarray(i,i+chunk));
-    return `data:audio/wav;base64,${btoa(binary)}`;
+  const startFallback=()=>{
+    try{
+      stopFallback();
+      const Ctx=window.AudioContext || window.webkitAudioContext;
+      if(!Ctx) return;
+      const ctx=new Ctx();
+      const master=ctx.createGain();
+      master.gain.value=Math.max(0.02,Math.min(0.5,volume*0.55));
+      master.connect(ctx.destination);
+      fallbackRef.current={ctx,timer:null,gain:master};
+      const roots={auto:174.61,shiva:146.83,hanuman:196,ganesha:174.61,vishnu:164.81,lakshmi:220,devi:185,krishna:196,surya:196,meditation:136.1};
+      const scales={
+        auto:[1,1.125,1.25,1.5,1.667,2],
+        shiva:[1,1.067,1.2,1.333,1.5,1.6,2],
+        hanuman:[1,1.125,1.25,1.5,1.667,2],
+        ganesha:[1,1.125,1.25,1.333,1.5,1.667,2],
+        vishnu:[1,1.125,1.25,1.5,1.667,2],
+        lakshmi:[1,1.125,1.25,1.333,1.5,1.667,1.875,2],
+        devi:[1,1.2,1.333,1.5,1.6,1.8,2],
+        krishna:[1,1.125,1.25,1.5,1.667,2,2.25],
+        surya:[1,1.125,1.25,1.5,1.667,1.875,2],
+        meditation:[1,1.125,1.333,1.5,1.778,2]
+      };
+      const melody=[0,2,4,5,4,2,1,0,3,4,6,5,4,2,0];
+      let idx=0;
+      const playNote=()=>{
+        if(!fallbackRef.current.ctx) return;
+        const t=ctx.currentTime, root=roots[trackId]||roots.auto, scale=scales[trackId]||scales.auto;
+        const freq=root*(scale[melody[idx%melody.length]%scale.length]||1)*2;
+        idx+=1;
+        const osc=ctx.createOscillator();
+        const g=ctx.createGain();
+        const p=ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+        osc.type=(trackId==="hanuman")?"square":(trackId==="shiva"||trackId==="devi"||trackId==="ganesha")?"triangle":"sine";
+        osc.frequency.setValueAtTime(freq,t);
+        g.gain.setValueAtTime(0,t);
+        g.gain.linearRampToValueAtTime(trackId==="meditation"?0.045:0.075,t+0.05);
+        g.gain.exponentialRampToValueAtTime(0.001,t+0.75);
+        osc.connect(g);
+        if(p){ p.pan.value=((idx%4)-1.5)/3; g.connect(p); p.connect(master); } else { g.connect(master); }
+        osc.start(t); osc.stop(t+0.8);
+        const drone=ctx.createOscillator();
+        const dg=ctx.createGain();
+        drone.type="sine"; drone.frequency.value=root;
+        dg.gain.setValueAtTime(0.018,t);
+        dg.gain.exponentialRampToValueAtTime(0.001,t+1.15);
+        drone.connect(dg); dg.connect(master); drone.start(t); drone.stop(t+1.2);
+        if(idx%8===0){
+          const bell=ctx.createOscillator(); const bg=ctx.createGain();
+          bell.type="sine"; bell.frequency.value=root*3.05;
+          bg.gain.setValueAtTime(0.09,t); bg.gain.exponentialRampToValueAtTime(0.001,t+1.6);
+          bell.connect(bg); bg.connect(master); bell.start(t); bell.stop(t+1.7);
+        }
+      };
+      playNote();
+      fallbackRef.current.timer=setInterval(playNote, trackId==="hanuman"||trackId==="surya"?420:trackId==="meditation"?900:560);
+      setStatus("fallback");
+    }catch(e){ console.warn("Vedatime ambient fallback failed",e); }
   };
 
   const stopAudio=(fadeMs=350)=>{
-    const audio=audioRef.current; clearInterval(fadeTimerRef.current);
-    if(!audio) return;
+    clearInterval(fadeTimerRef.current);
+    stopFallback();
+    const audio=audioRef.current;
+    if(!audio){ setStatus("ready"); return; }
     const startVol=audio.volume || 0, steps=12; let step=0;
-    fadeTimerRef.current=setInterval(()=>{ step++; audio.volume=Math.max(0,startVol*(1-step/steps)); if(step>=steps){ clearInterval(fadeTimerRef.current); try{audio.pause(); audio.currentTime=0;}catch(e){} } },Math.max(16,fadeMs/steps));
+    fadeTimerRef.current=setInterval(()=>{
+      step++;
+      try{ audio.volume=Math.max(0,startVol*(1-step/steps)); }catch(e){}
+      if(step>=steps){ clearInterval(fadeTimerRef.current); try{audio.pause(); audio.currentTime=0; audio.src="";}catch(e){} if(audioRef.current===audio) audioRef.current=null; setStatus("ready"); }
+    },Math.max(16,fadeMs/steps));
   };
 
   const startAudio=useCallback(()=>{
     try{
-      stopAudio(60);
-      const audio=new Audio(makeAmbientWavDataUrl(cfg));
-      audio.loop=true; audio.preload="auto"; audio.volume=Math.max(0.03,Math.min(0.85,volume));
+      stopAudio(40);
+      setStatus("loading");
+      const audio=new Audio(trackSrc);
+      audio.loop=true;
+      audio.preload="auto";
+      audio.volume=Math.max(0.02,Math.min(0.85,volume));
       audioRef.current=audio;
-      const playPromise=audio.play();
-      if(playPromise && typeof playPromise.catch==="function") playPromise.catch(err=>console.warn("Vedatime ambient play blocked until user gesture",err));
-    }catch(e){ console.error("Vedatime ambient audio failed",e); }
-  },[cfgKey,volume]);
+      audio.oncanplaythrough=()=>{ if(audioRef.current===audio) setStatus("playing"); };
+      audio.onerror=()=>{ if(audioRef.current===audio){ console.warn("Ambient file unavailable, using generated fallback:", trackSrc); startFallback(); } };
+      const p=audio.play();
+      if(p && typeof p.catch==="function"){
+        p.then(()=>setStatus("playing")).catch(err=>{ console.warn("Vedatime ambient play blocked or failed",err); startFallback(); });
+      } else setStatus("playing");
+    }catch(e){ console.warn("Vedatime ambient audio failed",e); startFallback(); }
+  },[trackSrc,volume]);
 
-  const handlePlay=()=>{ setPlaying(true); startAudio(); };
+  const handlePlay=()=>{ setPlaying(true); setTimeout(()=>startAudio(),0); };
   const handleStop=()=>{ setPlaying(false); stopAudio(350); };
 
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
-  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current) audioRef.current.volume=Math.max(0.03,Math.min(0.85,volume)); },[volume]);
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain && fallbackRef.current.ctx){ try{fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.05);}catch(e){} } },[volume]);
   useEffect(()=>{ if(playing) startAudio(); },[cfgKey,startAudio,playing]);
-  useEffect(()=>{ if(!AudioEngine?.registerAmbient) return; AudioEngine.registerAmbient(()=>{ if(audioRef.current) audioRef.current.volume=0; },()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.03,Math.min(0.85,volume)); }); },[playing,volume]);
-  useEffect(()=>{ const onMediaPlay=(e)=>{ const tag=e?.target?.tagName; if((tag==="AUDIO"||tag==="VIDEO") && e.target!==audioRef.current && audioRef.current) audioRef.current.volume=0; }; const onMediaStop=()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.03,Math.min(0.85,volume)); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true);document.removeEventListener("pause",onMediaStop,true);document.removeEventListener("ended",onMediaStop,true);}; },[playing,volume]);
+  useEffect(()=>{ if(!AudioEngine?.registerAmbient) return; AudioEngine.registerAmbient(()=>{ if(audioRef.current) audioRef.current.volume=0; if(fallbackRef.current.gain&&fallbackRef.current.ctx) fallbackRef.current.gain.gain.setTargetAtTime(0,fallbackRef.current.ctx.currentTime,0.08); },()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain&&fallbackRef.current.ctx&&playing) fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.08); }); },[playing,volume]);
+  useEffect(()=>{ const onMediaPlay=(e)=>{ const tag=e?.target?.tagName; if((tag==="AUDIO"||tag==="VIDEO") && e.target!==audioRef.current){ if(audioRef.current) audioRef.current.volume=0; if(fallbackRef.current.gain&&fallbackRef.current.ctx) fallbackRef.current.gain.gain.setTargetAtTime(0,fallbackRef.current.ctx.currentTime,0.08); } }; const onMediaStop=()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain&&fallbackRef.current.ctx&&playing) fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.08); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true);document.removeEventListener("pause",onMediaStop,true);document.removeEventListener("ended",onMediaStop,true);}; },[playing,volume]);
   useEffect(()=>()=>{ try{stopAudio(0);}catch(e){} },[]);
 
   const onDragStart=(e)=>{ draggingRef.current=true; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; dragStartRef.current={x:clientX,y:clientY,px:dragPos.x,py:dragPos.y}; e.preventDefault(); };
@@ -15036,14 +15093,15 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   useEffect(()=>{ document.addEventListener("mousemove",onDragMove); document.addEventListener("mouseup",onDragEnd); document.addEventListener("touchmove",onDragMove,{passive:false}); document.addEventListener("touchend",onDragEnd); return()=>{document.removeEventListener("mousemove",onDragMove);document.removeEventListener("mouseup",onDragEnd);document.removeEventListener("touchmove",onDragMove);document.removeEventListener("touchend",onDragEnd);}; },[onDragMove]);
 
   const ambientOptions=[["auto","Auto"],["shiva","Shiva"],["hanuman","Hanuman"],["ganesha","Ganesha"],["vishnu","Vishnu"],["lakshmi","Lakshmi"],["devi","Devi"],["krishna","Krishna"],["surya","Surya"],["meditation","Meditation"]];
+  const statusText=status==="loading"?"loading track":status==="fallback"?"generated backup":playing?"playing":"ready";
   if(minimized)return <div onClick={()=>setMinimized(false)} style={{position:"fixed",top:dragPos.y,left:dragPos.x,zIndex:9999,width:46,height:46,borderRadius:"50%",pointerEvents:"auto",background:playing?`linear-gradient(135deg,${cfg.color},${cfg.color}88)`:"rgba(15,15,35,0.92)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",border:`2px solid ${playing?cfg.color+"88":"rgba(255,255,255,0.12)"}`,backdropFilter:"blur(12px)"}}>{playing?"🎵":"🔇"}</div>;
   return <div style={{position:"fixed",left:dragPos.x,top:dragPos.y,zIndex:9999,pointerEvents:"auto",background:"rgba(8,6,22,0.97)",backdropFilter:"blur(20px)",border:`1px solid ${cfg.color}44`,borderRadius:20,padding:"12px 14px",boxShadow:"0 8px 40px rgba(0,0,0,0.65)",minWidth:220,maxWidth:240,touchAction:"none",userSelect:"none"}}>
-    <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cfg.emoji}</div><div><p style={{color:cfg.color,fontSize:10,fontWeight:900,margin:0,lineHeight:1.2}}>{cfg.label}</p><p style={{color:"rgba(255,255,255,0.34)",fontSize:8,margin:0}}>{cfg.reason||cfg.desc}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
+    <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>{cfg.emoji||"🎵"}</div><div><p style={{color:"#fff",fontSize:11,fontWeight:900,margin:0,lineHeight:1.15}}>Sacred Ambient</p><p style={{color:cfg.color,fontSize:9,fontWeight:800,margin:"1px 0 0",lineHeight:1.2}}>{cfg.label||weekdayCfg.label}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
     {playing&&<div style={{display:"flex",gap:2,alignItems:"flex-end",height:14,marginBottom:7,justifyContent:"center"}}>{[5,8,12,10,7,14,9,6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:cfg.color,animation:`tp${i%4} ${0.5+i*0.11}s ease-in-out infinite alternate`,height:h+"px",opacity:0.8}}/>)}</div>}
     <div style={{display:"grid",gridTemplateColumns:"1fr 74px",gap:6,marginBottom:7}}><select value={ambientMode} onChange={e=>setAmbientMode(e.target.value)} style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${cfg.color}33`,color:"#fff",borderRadius:10,padding:"6px 7px",fontSize:10,fontWeight:800,outline:"none"}}>{ambientOptions.map(([v,l])=><option key={v} value={v} style={{color:"#111"}}>{l}</option>)}</select><input type="range" min="0" max="0.85" step="0.01" value={volume} onChange={e=>setVolume(Number(e.target.value))} title="Ambient volume" /></div>
     <button onClick={playing?handleStop:handlePlay} style={{width:"100%",padding:"7px 0",borderRadius:10,border:"none",background:playing?`${cfg.color}22`:`linear-gradient(135deg,${cfg.color},${cfg.color}CC)`,color:playing?cfg.color:"#fff",fontSize:11,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:playing?"none":`0 2px 10px ${cfg.color}44`}}>{playing?<><span>⏹</span><span>Stop Music</span></>:<><span>▶</span><span>Play Sacred Music</span></>}</button>
     <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(cfg.ytQ||"Hindu devotional bhajan")}`} target="_blank" rel="noopener noreferrer" style={{display:"block",width:"100%",marginTop:5,padding:"5px 0",borderRadius:9,border:`1px solid ${cfg.color}44`,background:"transparent",color:cfg.color,fontSize:10,fontWeight:800,cursor:"pointer",textAlign:"center",textDecoration:"none"}}>🎬 Matching Bhajan</a>
-    <p style={{color:"rgba(255,255,255,0.25)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Looped musical ambient engine · Auto follows festival, tithi, muhurat, time and weekday</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
+    <p style={{color:"rgba(255,255,255,0.32)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Track: {trackId} · {statusText} · Auto follows festival, tithi, muhurat, time and weekday</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
 }
 
 /* ── Yoga pose inline SVG generator — chakra-colored, never fails, no external URLs ── */
