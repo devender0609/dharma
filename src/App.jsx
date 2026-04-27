@@ -15046,6 +15046,18 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     <p style={{color:"rgba(255,255,255,0.25)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Looped musical ambient engine · Auto follows festival, tithi, muhurat, time and weekday</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
 }
 
+/* ── Yoga pose inline SVG generator — chakra-colored, never fails, no external URLs ── */
+const CHAKRA_PALETTE = {
+  "Muladhara":   {from:"#C62828",to:"#FF8F00",glow:"#FF5722",emoji:"🔴"},
+  "Svadhisthana":{from:"#E65100",to:"#FF8F00",glow:"#FF6D00",emoji:"🟠"},
+  "Manipura":    {from:"#F9A825",to:"#FDD835",glow:"#FFD600",emoji:"🌟"},
+  "Anahata":     {from:"#2E7D32",to:"#66BB6A",glow:"#00C853",emoji:"💚"},
+  "Vishuddha":   {from:"#1565C0",to:"#42A5F5",glow:"#0091EA",emoji:"💙"},
+  "Ajna":        {from:"#4527A0",to:"#7E57C2",glow:"#6200EA",emoji:"🔮"},
+  "Sahasrara":   {from:"#6A1B9A",to:"#CE93D8",glow:"#AA00FF",emoji:"💜"},
+};
+
+/* Get chakra palette from a pose's chakra field (e.g. "Manipura (Solar Plexus)") */
 function getChakraPalette(chakraStr) {
   if (!chakraStr) return {from:"#FF8C42",to:"#FFD700",glow:"#FF6B2C",emoji:"🌟"};
   const key = Object.keys(CHAKRA_PALETTE).find(k => chakraStr.includes(k));
