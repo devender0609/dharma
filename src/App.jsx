@@ -14869,23 +14869,77 @@ const DAY_MUSIC_CONFIG=[
    ytQ:"Shani dev mantra stotra devotional"},
 ];
 
-/* Sacred ambient priority engine. The player now chooses music in this order:
-   1) Major festival today, 2) tithi observance today, 3) weekday deity.
-   This keeps the music from feeling like the same track every day and makes
-   Ashtami/Ekadashi/Purnima days feel distinct. */
-const OBSERVANCE_MUSIC_RULES=[
-  {match:/ekadashi|tulsi vivah|dev uthani/i, deity:"Vishnu · Narayana", emoji:"🐚", color:"#4F7CFF", label:"Ekadashi Vishnu Dhun", rootHz:246.94, desc:"Ekadashi observance — Vishnu devotion", ytQ:"Vishnu sahasranama Ekadashi bhajan", audioUrls:["https://archive.org/download/vishnu-mantra-ambient/vishnu_sahasranama.mp3"]},
-  {match:/ashtami|durgashtami|durga|navratri|mahagauri|kalashtami/i, deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Ashtami Devi Dhun", rootHz:349.23, desc:"Ashtami observance — Devi shakti", ytQ:"Durga mantra Ashtami devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
-  {match:/purnima|satyanarayan|guru purnima|raksha bandhan|buddha purnima|kartik purnima/i, deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Purnima Moonlight Dhun", rootHz:261.63, desc:"Purnima observance — calm lunar devotion", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
-  {match:/pradosh|shivratri|shiva|chaturdashi/i, deity:"Shiva", emoji:"🔱", color:"#87CEEB", label:"Pradosh Shiva Dhun", rootHz:220.00, desc:"Pradosh/Shivratri observance — Shiva dhyan", ytQ:"Om Namah Shivaya Pradosh slow chanting", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
-  {match:/chaturthi|ganesh|vinayaka|sankashti/i, deity:"Ganesha", emoji:"🐘", color:"#00BB55", label:"Chaturthi Ganesha Mantra", rootHz:392.00, desc:"Chaturthi observance — Ganesha mantra", ytQ:"Ganesh mantra Sankashti Chaturthi devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
-  {match:/hanuman|tuesday|saturday/i, deity:"Hanuman", emoji:"🙏", color:"#FF4444", label:"Hanuman Strength Dhun", rootHz:329.63, desc:"Hanuman devotion — strength and protection", ytQ:"Hanuman Chalisa slow devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+
+
+/* ══════════════════════════════════════════════════════
+   PREMIUM AMBIENT MUSIC ENGINE
+   Priority:
+   1) User override, 2) Festival pack, 3) Observance/tithi,
+   4) Active muhurat/time-of-day, 5) Weekday deity, 6) Tanpura fallback.
+══════════════════════════════════════════════════════ */
+const PREMIUM_AMBIENT_TRACKS = {
+  default: {id:"auto", deity:"Vedatime", emoji:"🎶", color:"#8E66FF", label:"Auto Sacred Ambient", rootHz:261.63, desc:"Automatic festival, observance, muhurat and weekday music", ytQ:"Hindu devotional instrumental ambient", audioUrls:[]},
+  shiva: {id:"shiva", deity:"Shiva", emoji:"🔱", color:"#87CEEB", label:"Shiva Dhyan", rootHz:220.00, desc:"Om Namah Shivaya ambience", ytQ:"Om Namah Shivaya slow chanting devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  hanuman: {id:"hanuman", deity:"Hanuman", emoji:"🙏", color:"#FF4444", label:"Hanuman Strength", rootHz:329.63, desc:"Strength and protection soundscape", ytQ:"Hanuman Chalisa slow devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  ganesha: {id:"ganesha", deity:"Ganesha", emoji:"🐘", color:"#00BB55", label:"Ganesha Mantra", rootHz:392.00, desc:"Obstacle-clearing Ganesha ambience", ytQ:"Ganesh mantra Sankashti Chaturthi devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  vishnu: {id:"vishnu", deity:"Vishnu · Narayana", emoji:"🐚", color:"#4F7CFF", label:"Vishnu Sahasranama", rootHz:246.94, desc:"Peace, preservation and Ekadashi devotion", ytQ:"Vishnu sahasranama Ekadashi bhajan", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  lakshmi: {id:"lakshmi", deity:"Lakshmi", emoji:"✨", color:"#FF69B4", label:"Lakshmi Aarti", rootHz:349.23, desc:"Abundance, grace and Friday devotion", ytQ:"Om Jai Lakshmi Mata aarti devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
+  devi: {id:"devi", deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Devi Shakti", rootHz:349.23, desc:"Ashtami, Navratri and Shakti ambience", ytQ:"Durga mantra Ashtami devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
+  krishna: {id:"krishna", deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Moonlight Krishna", rootHz:261.63, desc:"Purnima and calm night devotion", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  surya: {id:"surya", deity:"Surya · Rama", emoji:"☀️", color:"#FF8C42", label:"Surya Morning", rootHz:294.00, desc:"Morning brightness and Surya devotion", ytQ:"Surya mantra morning bhajan Jai Surya Narayan", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  meditation: {id:"meditation", deity:"Meditation", emoji:"🧘", color:"#68B3FF", label:"Deep Meditation", rootHz:196.00, desc:"Soft tanpura-style focus and relaxation", ytQ:"Indian tanpura meditation ambient", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+};
+
+const OBSERVANCE_MUSIC_RULES = [
+  {match:/ekadashi|tulsi vivah|dev uthani|vishnu/i, preset:"vishnu", reason:"Ekadashi / Vishnu observance"},
+  {match:/ashtami|durgashtami|kalashtami|durga|devi|navratri|mahagauri/i, preset:"devi", reason:"Ashtami / Devi observance"},
+  {match:/purnima|satyanarayan|guru purnima|raksha bandhan|buddha purnima|kartik purnima|full moon/i, preset:"krishna", reason:"Purnima / full moon observance"},
+  {match:/pradosh|shivratri|shiva|chaturdashi|masik shivratri/i, preset:"shiva", reason:"Pradosh / Shivratri observance"},
+  {match:/chaturthi|ganesh|vinayaka|sankashti/i, preset:"ganesha", reason:"Chaturthi / Ganesha observance"},
+  {match:/hanuman|tuesday|saturday/i, preset:"hanuman", reason:"Hanuman devotional day"},
 ];
 
-function getAmbientObservanceOverride(observances=[],festival=null){
-  const text=[festival?.name||"", ...(Array.isArray(observances)?observances:[])].join(" · ");
-  if(!text.trim()) return null;
-  return OBSERVANCE_MUSIC_RULES.find(rule=>rule.match.test(text)) || null;
+const FESTIVAL_AUDIO_PACKS = [
+  {match:/diwali|deepavali|lakshmi puja|dhanteras/i, preset:"lakshmi", label:"Diwali Lakshmi Festival Pack", desc:"Diwali glow · Lakshmi aarti · diya ambience"},
+  {match:/holi|rang/i, preset:"krishna", label:"Holi Krishna Festival Pack", desc:"Holi joy · Krishna bhajan ambience"},
+  {match:/navratri|durga puja|dussehra|vijayadashami/i, preset:"devi", label:"Navratri Devi Festival Pack", desc:"Navratri energy · Devi shakti ambience"},
+  {match:/janmashtami|krishna/i, preset:"krishna", label:"Janmashtami Krishna Festival Pack", desc:"Krishna janma · midnight bhakti ambience"},
+  {match:/maha shivratri|shivratri|mahashivratri/i, preset:"shiva", label:"Shivratri Shiva Festival Pack", desc:"Night vigil · Shiva dhyan ambience"},
+  {match:/ganesh chaturthi|vinayaka/i, preset:"ganesha", label:"Ganesh Chaturthi Festival Pack", desc:"Ganesha aarti · auspicious beginning"},
+  {match:/rama navami|ram navami/i, preset:"surya", label:"Rama Navami Festival Pack", desc:"Rama devotion · Surya lineage ambience"},
+  {match:/hanuman jayanti/i, preset:"hanuman", label:"Hanuman Jayanti Festival Pack", desc:"Strength, seva and protection ambience"},
+];
+
+function getTimeOfDayAmbient(now){
+  const h=now.getHours();
+  if(h>=4 && h<7) return {...PREMIUM_AMBIENT_TRACKS.meditation, id:"brahma_morning", label:"Brahma Muhurat Meditation", desc:"Pre-dawn meditation soundscape", reason:"Brahma Muhurat / early morning"};
+  if(h>=7 && h<11) return {...PREMIUM_AMBIENT_TRACKS.surya, id:"morning_surya", label:"Morning Surya Ambient", desc:"Bright morning devotional energy", reason:"Morning mood"};
+  if(h>=17 && h<21) return {...PREMIUM_AMBIENT_TRACKS.lakshmi, id:"evening_aarti", label:"Evening Aarti Ambient", desc:"Soft evening lamp-light ambience", reason:"Evening aarti mood"};
+  if(h>=21 || h<4) return {...PREMIUM_AMBIENT_TRACKS.meditation, id:"night_meditation", label:"Night Meditation", desc:"Calm night devotional ambience", reason:"Night mood"};
+  return null;
+}
+
+function getPremiumAmbientConfig({now, weekdayCfg, festival, observances, userMode}){
+  const manual = userMode && userMode !== "auto" ? PREMIUM_AMBIENT_TRACKS[userMode] : null;
+  if(manual) return {...manual, reason:"Manual user override", label:`${manual.label} · Manual`};
+  const festText=festival?.name || "";
+  const festPack=FESTIVAL_AUDIO_PACKS.find(p=>p.match.test(festText));
+  if(festPack){
+    const base=PREMIUM_AMBIENT_TRACKS[festPack.preset] || weekdayCfg;
+    return {...base, label:festPack.label, desc:festPack.desc, reason:"Festival override", deity:festival.name, emoji:festival.icon || base.emoji, color:festival.color || base.color};
+  }
+  const obsText=Array.isArray(observances) ? observances.join(" · ") : "";
+  const obsRule=OBSERVANCE_MUSIC_RULES.find(r=>r.match.test(obsText));
+  if(obsRule){
+    const base=PREMIUM_AMBIENT_TRACKS[obsRule.preset] || weekdayCfg;
+    return {...base, reason:obsRule.reason, label:`${base.label} · Today`, desc:`${obsRule.reason} · ${base.desc}`};
+  }
+  const activeMuhurat=getActiveMuhurat(now);
+  if(activeMuhurat?.name === "Brahma Muhurat") return {...PREMIUM_AMBIENT_TRACKS.meditation, label:"Brahma Muhurat Meditation", desc:"Pre-dawn meditation for japa and sankalpa", reason:"Active Brahma Muhurat"};
+  if(activeMuhurat?.name === "Abhijit Muhurat") return {...PREMIUM_AMBIENT_TRACKS.surya, label:"Abhijit Auspicious Ambient", desc:"Auspicious mid-day calm focus", reason:"Active Abhijit Muhurat"};
+  const timeMood=getTimeOfDayAmbient(now);
+  if(timeMood) return timeMood;
+  return {...weekdayCfg, reason:"Weekday deity fallback"};
 }
 
 function BgMusicPlayer({S, selectedLocation="austin"}){
@@ -14893,365 +14947,55 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const masterGainRef=useRef(null);
   const [playing,setPlaying]=useState(false);
   const [minimized,setMinimized]=useState(false);
-  // dragPos uses {x, y} from TOP-LEFT (not bottom). Initial: near bottom-left.
-  // Using top/left avoids the inverted Y-axis bug that bottom positioning causes.
-  const [dragPos,setDragPos]=useState({x:12,y:typeof window!=="undefined"?Math.max(60,window.innerHeight-220):500});
+  const [ambientMode,setAmbientMode]=useState(()=>{ try{return localStorage.getItem("vedatime_ambient_mode")||"auto";}catch(e){return"auto";} });
+  const [volume,setVolume]=useState(()=>{ try{return Number(localStorage.getItem("vedatime_ambient_volume")||"0.28");}catch(e){return 0.28;} });
+  const [dragPos,setDragPos]=useState({x:12,y:typeof window!=="undefined"?Math.max(60,window.innerHeight-260):500});
   const playingRef=useRef(false);
-  const audioRef=useRef(null);      // real <audio> element
+  const audioRef=useRef(null);
   const scheduleRef=useRef(null);
   const draggingRef=useRef(false);
   const dragStartRef=useRef({x:0,y:0,px:0,py:0});
+  const fadeTimerRef=useRef(null);
 
   const _now=new Date();
   const DOW=_now.getDay();
-  const _weekdayCfg=DAY_MUSIC_CONFIG[DOW];
-  const _todayObs=useMemo(()=>{
-    try { return getTodayObservances(selectedLocation || "austin") || []; }
-    catch(e){ return []; }
-  },[selectedLocation]);
-  // Festival override: on a festival day, use the festival's deity/name for the music label.
+  const _weekdayCfg=DAY_MUSIC_CONFIG[DOW] || DAY_MUSIC_CONFIG[0];
   const _todayFest=FESTIVALS.find(f=>f.month===_now.getMonth()&&f.day===_now.getDate());
-  const _obsOverride=getAmbientObservanceOverride(_todayObs,_todayFest);
-  const cfg=_todayFest ? {
-    ...(_obsOverride || _weekdayCfg),
-    deity: _todayFest.name,
-    emoji: _todayFest.icon || (_obsOverride?.emoji || _weekdayCfg.emoji),
-    color: _todayFest.color || (_obsOverride?.color || _weekdayCfg.color),
-    label: `${_todayFest.name} · Festival Ambient`,
-    desc: `Festival-day sacred ambient for ${_todayFest.name}`,
-    ytQ: `${_todayFest.name} devotional bhajan mantra`,
-    audioUrls: _obsOverride?.audioUrls || _weekdayCfg.audioUrls
-  } : (_obsOverride || _weekdayCfg);
+  const _todayObs=useMemo(()=>{ try { return getTodayObservances(selectedLocation || "austin") || []; } catch(e){ return []; } },[selectedLocation]);
+  const cfg=getPremiumAmbientConfig({now:_now, weekdayCfg:_weekdayCfg, festival:_todayFest, observances:_todayObs, userMode:ambientMode});
+  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
+  const DOW_AMBIENT = {0:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],1:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],2:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],3:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],4:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],5:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"],6:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]};
+  const AMBIENT_URLS=["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3","https://upload.wikimedia.org/wikipedia/commons/transcoded/4/46/Om-chant.ogg/Om-chant.ogg.mp3","https://upload.wikimedia.org/wikipedia/commons/c/c5/Om.ogg"];
 
-  // ── Real audio ambient (loop) ───────────────────────────────
-  // Day-specific religious ambient audio — public domain / archive sources
-  const DOW_AMBIENT = {
-    0: ["https://archive.org/download/surya-mantra-bhajan/surya_morning.mp3"],   // Sunday: Surya
-    1: ["https://archive.org/download/om-namah-shivaya-ambient/om_namah_shivaya.mp3"], // Monday: Shiva
-    2: ["https://archive.org/download/hanuman-chalisa-bhajan/hanuman_chalisa.mp3"], // Tuesday: Hanuman
-    3: ["https://archive.org/download/ganesha-mantra-ambient/gam_ganapataye_namah.mp3"],  // Wednesday: Ganesha
-    4: ["https://archive.org/download/vishnu-mantra-ambient/vishnu_sahasranama.mp3"], // Thursday: Vishnu
-    5: ["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"],   // Friday: Lakshmi
-    6: ["https://archive.org/download/shani-mantra-ambient/shani_stotra.mp3"],     // Saturday: Shani
-  };
-  const AMBIENT_URLS = [
-    // Reliable public-domain Om chants on archive.org
-    "https://ia800905.us.archive.org/13/items/om-chanting-108-times/om_chanting_108_times.mp3",
-    "https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3",
-    // Wikipedia fallbacks
-    "https://upload.wikimedia.org/wikipedia/commons/transcoded/4/46/Om-chant.ogg/Om-chant.ogg.mp3",
-    "https://upload.wikimedia.org/wikipedia/commons/c/c5/Om.ogg",
-  ];
-
-  const startAudio = useCallback(() => {
-    // Try real audio URLs first; fall back to Web Audio tanpura (always works)
-    const urlsToTry = [...(cfg.audioUrls || DOW_AMBIENT[DOW] || []), ...AMBIENT_URLS];
-    let urlIdx = 0;
-    let tried = false;
-
-    const tryNextUrl = () => {
-      if (urlIdx >= urlsToTry.length) {
-        if (!tried) { tried = true; startWebAudio(); }
-        return;
-      }
-      const url = urlsToTry[urlIdx++];
-      const audio = new Audio();
-      audio.loop = true;
-      audio.volume = 0.28;
-      audio.preload = "auto";
-      audio.crossOrigin = "anonymous";
-      const timeo = setTimeout(() => { audio.src = ""; tryNextUrl(); }, 5000);
-      audio.oncanplaythrough = () => {
-        clearTimeout(timeo);
-        if (!tried) {
-          tried = true;
-          audioRef.current = audio;
-          audio.play().catch(() => { audioRef.current = null; startWebAudio(); });
-        }
-      };
-      audio.onerror = () => { clearTimeout(timeo); tryNextUrl(); };
-      audio.src = url;
-      audio.load();
-    };
-
-    if (audioRef.current) { audioRef.current.play().catch(()=>{}); return; }
-    tryNextUrl();
-  }, [DOW, cfg]);
-
-  const stopAudio = useCallback(() => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-    clearTimeout(scheduleRef.current);
-    scheduleRef.current = null; // clear guard so startWebAudio can restart
-    if (masterGainRef.current && ctxRef.current) {
-      try {
-        masterGainRef.current.gain.linearRampToValueAtTime(0, ctxRef.current.currentTime + 0.8);
-      } catch(e) {}
-    }
-  }, []);
-
-  // ── Web Audio tanpura fallback ───────────────────────────────
-  // 6 oscillators per note: fundamental + 5 harmonics with beating
-  const getTanpuraFreqs = (root) => [root * 0.5, root * 0.75, root, root * 1.5, root * 2];
-
-  const pluckString = (ctx, freq, gain, when) => {
-    const master = masterGainRef.current;
-    if (!master) return;
-    // Fundamental + 4 harmonics with natural detuning
-    const harmonics = [1, 2, 3, 4, 5];
-    const harmGains = [1, 0.45, 0.2, 0.1, 0.05];
-    harmonics.forEach((h, i) => {
-      const osc = ctx.createOscillator();
-      const g = ctx.createGain();
-      const detune = (Math.random() - 0.5) * 3; // ±1.5 cents natural detuning
-      osc.type = "sine"; // sine only — no sawtooth (avoids harsh buzzy sound)
-      osc.frequency.value = freq * h;
-      osc.detune.value = detune;
-      const a = gain * harmGains[i];
-      g.gain.setValueAtTime(0, when);
-      g.gain.linearRampToValueAtTime(a, when + 0.015);
-      g.gain.exponentialRampToValueAtTime(a * 0.6, when + 0.4);
-      g.gain.exponentialRampToValueAtTime(a * 0.02, when + 3.8 - i * 0.3);
-      osc.connect(g); g.connect(master);
-      osc.start(when); osc.stop(when + 4.5);
-    });
-  };
-
-  const startWebAudio = useCallback(() => {
-    try {
-      if (!ctxRef.current) ctxRef.current = new (window.AudioContext || window.webkitAudioContext)();
-      const ctx = ctxRef.current;
-      if (ctx.state === "suspended") ctx.resume();
-      if (!masterGainRef.current) {
-        masterGainRef.current = ctx.createGain();
-        // Low-pass filter for warmth
-        const lpf = ctx.createBiquadFilter();
-        lpf.type = "lowpass"; lpf.frequency.value = 1800; lpf.Q.value = 0.5;
-        // Convolution-less "room" via delay feedback
-        const delay = ctx.createDelay(0.3);
-        delay.delayTime.value = 0.18;
-        const fbGain = ctx.createGain();
-        fbGain.gain.value = 0.22;
-        masterGainRef.current.connect(lpf);
-        lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay);
-        lpf.connect(ctx.destination);
-        delay.connect(ctx.destination);
-      }
-      masterGainRef.current.gain.value = 0.16;
-      const freqs = getTanpuraFreqs(cfg.rootHz || 261.63);
-      const CYCLE = 5.2;
-      const strikes = [0, 1.1, 2.3, 3.5, 4.4];
-      const gains = [0.55, 0.38, 0.48, 0.38, 0.44];
-      // Guard against double-scheduling if startWebAudio is called while already running
-      if (scheduleRef.current) return;
-      const scheduleCycle = () => {
-        if (!playingRef.current) { scheduleRef.current = null; return; }
-        const now = ctx.currentTime;
-        strikes.forEach((offset, i) => {
-          pluckString(ctx, freqs[i % freqs.length], gains[i % gains.length], now + offset);
-        });
-        scheduleRef.current = setTimeout(scheduleCycle, CYCLE * 1000 - 100);
-      };
-      scheduleCycle();
-    } catch(e) { console.warn("Tanpura Web Audio error:", e); }
-  }, [cfg]);
-
-  const handlePlay = () => {
-    setPlaying(true); playingRef.current = true;
-    startAudio();
-  };
-  const handleStop = () => {
-    setPlaying(false); playingRef.current = false;
-    stopAudio();
-  };
-
-  // If the sacred context changes while music is playing (date/location/observance),
-  // restart the ambient layer so the new deity/observance actually takes effect.
-  const cfgKey=`${cfg.label}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
-  useEffect(()=>{
-    if(!playingRef.current) return;
-    stopAudio();
-    setTimeout(()=>{ if(playingRef.current) startAudio(); },120);
-  },[cfgKey]);
-
-  // Register with AudioEngine for pause/resume coordination
-  // IMPORTANT: use gain mute/unmute — NOT handleStop — so the scheduler never dies
-  useEffect(() => {
-    AudioEngine.registerAmbient(
-      // pause: just silence the master gain; scheduler keeps running
-      () => {
-        if (masterGainRef.current && ctxRef.current) {
-          try {
-            masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime);
-            masterGainRef.current.gain.linearRampToValueAtTime(0, ctxRef.current.currentTime + 0.4);
-          } catch(e) {}
-        }
-        if (audioRef.current) { try { audioRef.current.volume = 0; } catch(e) {} }
-      },
-      // resume: restore master gain without restarting
-      () => {
-        if (masterGainRef.current && ctxRef.current) {
-          try {
-            if (ctxRef.current.state === "suspended") ctxRef.current.resume();
-            masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime);
-            masterGainRef.current.gain.linearRampToValueAtTime(0.16, ctxRef.current.currentTime + 0.7);
-          } catch(e) {}
-        }
-        if (audioRef.current) { try { audioRef.current.volume = 0.28; } catch(e) {} }
-      }
-    );
-  }, []);
-
-  // Auto-start on first user interaction
-  useEffect(() => {
-    const autoStart = () => {
-      if (!playingRef.current) handlePlay();
-    };
-    document.addEventListener("click", autoStart, { once: true });
-    document.addEventListener("touchstart", autoStart, { once: true });
-    return () => {
-      document.removeEventListener("click", autoStart);
-      document.removeEventListener("touchstart", autoStart);
-    };
-  }, []);
-
-  // Auto-pause when ANY media plays; auto-resume when it stops
-  useEffect(() => {
-    const onMediaPlay = (e) => {
-      if ((e.target.tagName === "AUDIO" || e.target.tagName === "VIDEO") && playingRef.current) {
-        handleStop();
-      }
-    };
-    const onMediaStop = (e) => {
-      if (e.target.tagName === "AUDIO" || e.target.tagName === "VIDEO") {
-        setTimeout(() => { if (!playingRef.current) handlePlay(); }, 800);
-      }
-    };
-    document.addEventListener("play", onMediaPlay, true);
-    document.addEventListener("pause", onMediaStop, true);
-    document.addEventListener("ended", onMediaStop, true);
-    return () => {
-      document.removeEventListener("play", onMediaPlay, true);
-      document.removeEventListener("pause", onMediaStop, true);
-      document.removeEventListener("ended", onMediaStop, true);
-    };
-  }, []);
-
-  useEffect(() => () => { stopAudio(); }, [stopAudio]);
-
-  // ── Draggable logic ─────────────────────────────────────────
-  const onDragStart = (e) => {
-    draggingRef.current = true;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    dragStartRef.current = { x: clientX, y: clientY, px: dragPos.x, py: dragPos.y };
-    e.preventDefault();
-  };
-  const onDragMove = useCallback((e) => {
-    if (!draggingRef.current) return;
-    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-    const dx = clientX - dragStartRef.current.x;
-    const dy = clientY - dragStartRef.current.y;
-    const newX = Math.max(8, Math.min(window.innerWidth - 230, dragStartRef.current.px + dx));
-    // top positioning: dy>0 moves DOWN correctly (no inversion bug)
-    const newY = Math.max(8, Math.min(window.innerHeight - 200, dragStartRef.current.py + dy));
-    setDragPos({ x: newX, y: newY });
-  }, []);
-  const onDragEnd = () => { draggingRef.current = false; };
-  useEffect(() => {
-    document.addEventListener("mousemove", onDragMove);
-    document.addEventListener("mouseup", onDragEnd);
-    document.addEventListener("touchmove", onDragMove, { passive: false });
-    document.addEventListener("touchend", onDragEnd);
-    return () => {
-      document.removeEventListener("mousemove", onDragMove);
-      document.removeEventListener("mouseup", onDragEnd);
-      document.removeEventListener("touchmove", onDragMove);
-      document.removeEventListener("touchend", onDragEnd);
-    };
-  }, [onDragMove]);
-
-  if (minimized) return (
-    <div onClick={() => setMinimized(false)}
-      style={{ position: "fixed", top: dragPos.y, left: dragPos.x, zIndex: 9999, width: 46, height: 46,
-        borderRadius: "50%", pointerEvents: "auto",
-        background: playing ? `linear-gradient(135deg,${cfg.color},${cfg.color}88)` : "rgba(15,15,35,0.92)",
-        display: "flex", alignItems: "center", justifyContent: "center", fontSize: 20,
-        cursor: "pointer", boxShadow: "0 4px 20px rgba(0,0,0,0.5)",
-        border: `2px solid ${playing ? cfg.color+"88" : "rgba(255,255,255,0.12)"}`,
-        backdropFilter: "blur(12px)" }}>
-      {playing ? "🎵" : "🔇"}
-    </div>
-  );
-
-  return (
-    <div style={{ position: "fixed", left: dragPos.x, top: dragPos.y, zIndex: 9999,
-      pointerEvents: "auto", background: "rgba(8,6,22,0.97)", backdropFilter: "blur(20px)",
-      border: `1px solid ${cfg.color}44`, borderRadius: 20, padding: "12px 14px",
-      boxShadow: "0 8px 40px rgba(0,0,0,0.65)", minWidth: 200, maxWidth: 220,
-      touchAction: "none", userSelect: "none" }}>
-      {/* Drag handle */}
-      <div onMouseDown={onDragStart} onTouchStart={onDragStart}
-        style={{ display: "flex", alignItems: "center", justifyContent: "space-between",
-          marginBottom: 9, cursor: "grab" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
-          <div style={{ width: 32, height: 32, borderRadius: "50%",
-            background: `${cfg.color}22`, border: `1px solid ${cfg.color}44`,
-            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15 }}>
-            {cfg.emoji}
-          </div>
-          <div>
-            <p style={{ color: cfg.color, fontSize: 10, fontWeight: 800, margin: 0, lineHeight: 1.2 }}>
-              {cfg.label}
-            </p>
-            <p style={{ color: "rgba(255,255,255,0.3)", fontSize: 8, margin: 0 }}>{cfg.desc}</p>
-          </div>
-        </div>
-        <button onClick={() => setMinimized(true)}
-          style={{ background: "none", border: "none", color: "rgba(255,255,255,0.3)",
-            fontSize: 13, cursor: "pointer", padding: "2px 5px" }}>✕</button>
-      </div>
-      {playing && (
-        <div style={{ display: "flex", gap: 2, alignItems: "flex-end", height: 14,
-          marginBottom: 7, justifyContent: "center" }}>
-          {[5,8,12,10,7,14,9,6].map((h,i) => (
-            <div key={i} style={{ width: 3, borderRadius: 2, background: cfg.color,
-              animation: `tp${i%4} ${0.5+i*0.11}s ease-in-out infinite alternate`,
-              height: h + "px", opacity: 0.8 }} />
-          ))}
-        </div>
-      )}
-      <button onClick={playing ? handleStop : handlePlay}
-        style={{ width: "100%", padding: "7px 0", borderRadius: 10, border: "none",
-          background: playing ? `${cfg.color}22` : `linear-gradient(135deg,${cfg.color},${cfg.color}CC)`,
-          color: playing ? cfg.color : "#fff", fontSize: 11, fontWeight: 800, cursor: "pointer",
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-          boxShadow: playing ? "none" : `0 2px 10px ${cfg.color}44` }}>
-        {playing ? <><span>⏹</span><span>Stop Music</span></> : <><span>▶</span><span>Play Sacred Music</span></>}
-      </button>
-      <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(cfg.ytQ)}`}
-        target="_blank" rel="noopener noreferrer"
-        style={{ display:"block", width:"100%", marginTop:5, padding:"5px 0", borderRadius:9,
-          border:`1px solid ${cfg.color}44`, background:"transparent", color:cfg.color,
-          fontSize:10, fontWeight:700, cursor:"pointer", textAlign:"center", textDecoration:"none" }}>
-        🎬 Today's Bhajan on YouTube
-      </a>
-      <p style={{ color: "rgba(255,255,255,0.25)", fontSize: 8, margin: "6px 0 0", textAlign: "center" }}>
-        🎶 {playing ? `Sacred ambient for ${cfg.deity || DAY_DEITY_LABELS[new Date().getDay()] || "today"} — auto-pauses during media` : "Tap Play for day/observance-based sacred ambient"}
-      </p>
-      <style>{`
-        @keyframes tp0{from{height:4px}to{height:14px}}
-        @keyframes tp1{from{height:10px}to{height:4px}}
-        @keyframes tp2{from{height:3px}to{height:16px}}
-        @keyframes tp3{from{height:12px}to{height:5px}}
-      `}</style>
-    </div>
-  );
+  const fadeAudio=(audio,from,to,ms=900,onDone)=>{ try{ clearInterval(fadeTimerRef.current); }catch(e){}; if(!audio){ onDone?.(); return; } const steps=18; let i=0; audio.volume=Math.max(0,Math.min(1,from)); fadeTimerRef.current=setInterval(()=>{ i++; const t=i/steps; audio.volume=Math.max(0,Math.min(1,from+(to-from)*t)); if(i>=steps){ clearInterval(fadeTimerRef.current); onDone?.(); } },Math.max(16,ms/steps)); };
+  const getTanpuraFreqs=(root)=>[root*0.5,root*0.75,root,root*1.5,root*2];
+  const pluckString=(ctx,freq,gain,when)=>{ const master=masterGainRef.current; if(!master)return; [1,2,3,4,5].forEach((h,i)=>{ const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type="sine"; osc.frequency.value=freq*h; osc.detune.value=(Math.random()-0.5)*3; const a=gain*[1,0.45,0.2,0.1,0.05][i]; g.gain.setValueAtTime(0,when); g.gain.linearRampToValueAtTime(a,when+0.015); g.gain.exponentialRampToValueAtTime(a*0.6,when+0.4); g.gain.exponentialRampToValueAtTime(a*0.02,when+3.8-i*0.3); osc.connect(g); g.connect(master); osc.start(when); osc.stop(when+4.5); }); };
+  const startWebAudio=useCallback(()=>{ try{ if(!ctxRef.current)ctxRef.current=new(window.AudioContext||window.webkitAudioContext)(); const ctx=ctxRef.current; if(ctx.state==="suspended")ctx.resume(); if(!masterGainRef.current){ masterGainRef.current=ctx.createGain(); const lpf=ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=1800; lpf.Q.value=0.5; const delay=ctx.createDelay(0.3); delay.delayTime.value=0.18; const fbGain=ctx.createGain(); fbGain.gain.value=0.22; masterGainRef.current.connect(lpf); lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay); lpf.connect(ctx.destination); delay.connect(ctx.destination); } masterGainRef.current.gain.value=0.16; const freqs=getTanpuraFreqs(cfg.rootHz||261.63); const CYCLE=5.2; const strikes=[0,1.1,2.3,3.5,4.4]; const gains=[0.55,0.38,0.48,0.38,0.44]; if(scheduleRef.current)return; const scheduleCycle=()=>{ if(!playingRef.current){ scheduleRef.current=null; return; } const now=ctx.currentTime; strikes.forEach((offset,i)=>pluckString(ctx,freqs[i%freqs.length],gains[i%gains.length],now+offset)); scheduleRef.current=setTimeout(scheduleCycle,CYCLE*1000-100); }; scheduleCycle(); }catch(e){ console.warn("Tanpura Web Audio error:",e); } },[cfgKey]);
+  const startAudio=useCallback(()=>{ const urlsToTry=[...(cfg.audioUrls||[]),...(DOW_AMBIENT[DOW]||[]),...AMBIENT_URLS]; let urlIdx=0; let resolved=false; const currentKey=cfgKey; const tryNextUrl=()=>{ if(urlIdx>=urlsToTry.length){ if(!resolved){ resolved=true; startWebAudio(); } return; } const url=urlsToTry[urlIdx++]; const nextAudio=new Audio(); nextAudio.loop=true; nextAudio.volume=0; nextAudio.preload="auto"; nextAudio.crossOrigin="anonymous"; nextAudio.dataset.trackKey=currentKey; const timeo=setTimeout(()=>{ try{nextAudio.src="";}catch(e){} tryNextUrl(); },5000); nextAudio.oncanplaythrough=()=>{ clearTimeout(timeo); if(resolved)return; resolved=true; const old=audioRef.current; nextAudio.play().then(()=>{ audioRef.current=nextAudio; fadeAudio(nextAudio,0,volume,950); if(old&&old!==nextAudio){ fadeAudio(old,old.volume||volume,0,800,()=>{ try{old.pause(); old.src="";}catch(e){} }); } }).catch(()=>{ audioRef.current=null; startWebAudio(); }); }; nextAudio.onerror=()=>{ clearTimeout(timeo); tryNextUrl(); }; nextAudio.src=url; nextAudio.load(); }; if(audioRef.current&&audioRef.current.dataset.trackKey===currentKey){ audioRef.current.play().catch(()=>{}); fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450); return; } tryNextUrl(); },[cfgKey,volume,DOW,startWebAudio]);
+  const stopAudio=useCallback(()=>{ if(audioRef.current){ const old=audioRef.current; fadeAudio(old,old.volume||volume,0,550,()=>{ try{old.pause(); old.currentTime=0;}catch(e){} }); } clearTimeout(scheduleRef.current); scheduleRef.current=null; if(masterGainRef.current&&ctxRef.current){ try{ masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.8); }catch(e){} } },[volume]);
+  const handlePlay=()=>{ setPlaying(true); playingRef.current=true; startAudio(); };
+  const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); },[volume]);
+  useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
+  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0.16,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
+  useEffect(()=>{ const autoStart=()=>{ if(!playingRef.current)handlePlay(); }; document.addEventListener("click",autoStart,{once:true}); document.addEventListener("touchstart",autoStart,{once:true}); return()=>{document.removeEventListener("click",autoStart); document.removeEventListener("touchstart",autoStart);}; },[]);
+  useEffect(()=>{ const onMediaPlay=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current&&playingRef.current)handleStop(); }; const onMediaStop=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current)setTimeout(()=>{ if(!playingRef.current)handlePlay(); },800); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true); document.removeEventListener("pause",onMediaStop,true); document.removeEventListener("ended",onMediaStop,true);}; },[]);
+  useEffect(()=>()=>{stopAudio();},[stopAudio]);
+  const onDragStart=(e)=>{ draggingRef.current=true; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; dragStartRef.current={x:clientX,y:clientY,px:dragPos.x,py:dragPos.y}; e.preventDefault(); };
+  const onDragMove=useCallback((e)=>{ if(!draggingRef.current)return; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; const dx=clientX-dragStartRef.current.x; const dy=clientY-dragStartRef.current.y; setDragPos({x:Math.max(8,Math.min(window.innerWidth-250,dragStartRef.current.px+dx)),y:Math.max(8,Math.min(window.innerHeight-250,dragStartRef.current.py+dy))}); },[]);
+  const onDragEnd=()=>{ draggingRef.current=false; };
+  useEffect(()=>{ document.addEventListener("mousemove",onDragMove); document.addEventListener("mouseup",onDragEnd); document.addEventListener("touchmove",onDragMove,{passive:false}); document.addEventListener("touchend",onDragEnd); return()=>{document.removeEventListener("mousemove",onDragMove); document.removeEventListener("mouseup",onDragEnd); document.removeEventListener("touchmove",onDragMove); document.removeEventListener("touchend",onDragEnd);}; },[onDragMove]);
+  const ambientOptions=[["auto","Auto"],["shiva","Shiva"],["hanuman","Hanuman"],["ganesha","Ganesha"],["vishnu","Vishnu"],["lakshmi","Lakshmi"],["devi","Devi"],["krishna","Krishna"],["surya","Surya"],["meditation","Meditation"]];
+  if(minimized)return <div onClick={()=>setMinimized(false)} style={{position:"fixed",top:dragPos.y,left:dragPos.x,zIndex:9999,width:46,height:46,borderRadius:"50%",pointerEvents:"auto",background:playing?`linear-gradient(135deg,${cfg.color},${cfg.color}88)`:"rgba(15,15,35,0.92)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",border:`2px solid ${playing?cfg.color+"88":"rgba(255,255,255,0.12)"}`,backdropFilter:"blur(12px)"}}>{playing?"🎵":"🔇"}</div>;
+  return <div style={{position:"fixed",left:dragPos.x,top:dragPos.y,zIndex:9999,pointerEvents:"auto",background:"rgba(8,6,22,0.97)",backdropFilter:"blur(20px)",border:`1px solid ${cfg.color}44`,borderRadius:20,padding:"12px 14px",boxShadow:"0 8px 40px rgba(0,0,0,0.65)",minWidth:220,maxWidth:240,touchAction:"none",userSelect:"none"}}>
+    <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cfg.emoji}</div><div><p style={{color:cfg.color,fontSize:10,fontWeight:900,margin:0,lineHeight:1.2}}>{cfg.label}</p><p style={{color:"rgba(255,255,255,0.34)",fontSize:8,margin:0}}>{cfg.reason||cfg.desc}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
+    {playing&&<div style={{display:"flex",gap:2,alignItems:"flex-end",height:14,marginBottom:7,justifyContent:"center"}}>{[5,8,12,10,7,14,9,6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:cfg.color,animation:`tp${i%4} ${0.5+i*0.11}s ease-in-out infinite alternate`,height:h+"px",opacity:0.8}}/>)}</div>}
+    <div style={{display:"grid",gridTemplateColumns:"1fr 74px",gap:6,marginBottom:7}}><select value={ambientMode} onChange={e=>setAmbientMode(e.target.value)} style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${cfg.color}33`,color:"#fff",borderRadius:10,padding:"6px 7px",fontSize:10,fontWeight:800,outline:"none"}}>{ambientOptions.map(([v,l])=><option key={v} value={v} style={{color:"#111"}}>{l}</option>)}</select><input type="range" min="0" max="0.5" step="0.01" value={volume} onChange={e=>setVolume(Number(e.target.value))} title="Ambient volume" /></div>
+    <button onClick={playing?handleStop:handlePlay} style={{width:"100%",padding:"7px 0",borderRadius:10,border:"none",background:playing?`${cfg.color}22`:`linear-gradient(135deg,${cfg.color},${cfg.color}CC)`,color:playing?cfg.color:"#fff",fontSize:11,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:playing?"none":`0 2px 10px ${cfg.color}44`}}>{playing?<><span>⏹</span><span>Stop Music</span></>:<><span>▶</span><span>Play Sacred Music</span></>}</button>
+    <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(cfg.ytQ||"Hindu devotional bhajan")}`} target="_blank" rel="noopener noreferrer" style={{display:"block",width:"100%",marginTop:5,padding:"5px 0",borderRadius:9,border:`1px solid ${cfg.color}44`,background:"transparent",color:cfg.color,fontSize:10,fontWeight:800,cursor:"pointer",textAlign:"center",textDecoration:"none"}}>🎬 Matching Bhajan</a>
+    <p style={{color:"rgba(255,255,255,0.25)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Premium engine: festival → tithi → muhurat → time mood → weekday · crossfade on change</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
 }
-
 
 
 /* ── Yoga pose inline SVG generator — chakra-colored, never fails, no external URLs ── */
@@ -17042,7 +16786,7 @@ export default function App(){
         {/* Global VideoModal — one video player for the entire app, portal-rendered */}
         {globalVideo&&<GlobalVideoModal data={globalVideo} onClose={()=>setGlobalVideo(null)} S={S}/>}
         <NowPlayingBar S={S} bp={bp}/>
-        <BgMusicPlayer S={S} selectedLocation={selectedLocation}/>
+        <BgMusicPlayer S={S}/>
       </div>
     </ErrorBoundary>
   );
