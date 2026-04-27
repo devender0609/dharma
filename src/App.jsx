@@ -14985,8 +14985,23 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
       try{ masterGainRef.current?.disconnect(); }catch(e){}
       const master=ctx.createGain();
       master.gain.setValueAtTime(0, ctx.currentTime);
-      master.gain.linearRampToValueAtTime(0.16, ctx.currentTime+0.8);
+      master.gain.linearRampToValueAtTime(Math.max(0.16, volume*0.95), ctx.currentTime+0.35);
       masterGainRef.current=master;
+
+      // Immediate audible confirmation so the user knows audio actually started.
+      try {
+        const chime = ctx.createOscillator();
+        const chimeGain = ctx.createGain();
+        chime.type = "sine";
+        chime.frequency.setValueAtTime((cfg.rootHz || 261.63) * 2, ctx.currentTime);
+        chimeGain.gain.setValueAtTime(0.0001, ctx.currentTime);
+        chimeGain.gain.exponentialRampToValueAtTime(Math.max(0.08, volume * 0.35), ctx.currentTime + 0.04);
+        chimeGain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.7);
+        chime.connect(chimeGain);
+        chimeGain.connect(ctx.destination);
+        chime.start(ctx.currentTime);
+        chime.stop(ctx.currentTime + 0.75);
+      } catch(e) {}
 
       const filter=ctx.createBiquadFilter();
       filter.type="lowpass";
@@ -15024,7 +15039,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
 
       // Base tanpura/drone layer.
       const baseType=timbre==="hanuman"||timbre==="devi"?"sawtooth":timbre==="shiva"?"triangle":"sine";
-      [0.5,1,1.5,2].forEach((m,i)=>addDrone(root*m,baseType,[0.055,0.04,0.028,0.018][i],(i-1)*3));
+      [0.5,1,1.5,2].forEach((m,i)=>addDrone(root*m,baseType,[0.14,0.09,0.06,0.04][i],(i-1)*3));
 
       // Track-specific audible identity. All generated locally; no repeated MP3.
       if(timbre==="krishna"){
@@ -15037,7 +15052,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
             const osc=ctx.createOscillator(); const g=ctx.createGain();
             osc.type="sine"; osc.frequency.value=root*2*m;
             g.gain.setValueAtTime(0,t+i*0.55);
-            g.gain.linearRampToValueAtTime(0.055,t+i*0.55+0.08);
+            g.gain.linearRampToValueAtTime(0.13,t+i*0.55+0.08);
             g.gain.exponentialRampToValueAtTime(0.001,t+i*0.55+0.5);
             osc.connect(g); g.connect(master); osc.start(t+i*0.55); osc.stop(t+i*0.55+0.55);
           });
@@ -15047,7 +15062,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
       } else if(timbre==="ganesha"||timbre==="lakshmi"||timbre==="devi"){
         // Temple bells; Devi is faster/brighter, Lakshmi softer.
         const bellInterval=timbre==="devi"?2400:timbre==="lakshmi"?4300:3200;
-        const bellGain=timbre==="lakshmi"?0.055:timbre==="devi"?0.075:0.065;
+        const bellGain=timbre==="lakshmi"?0.11:timbre==="devi"?0.15:0.13;
         const playBell=()=>{
           if(!playingRef.current) return;
           const t=ctx.currentTime;
@@ -15070,7 +15085,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
             const osc=ctx.createOscillator(); const g=ctx.createGain();
             osc.type="triangle"; osc.frequency.value=root*(0.75+i*0.02);
             g.gain.setValueAtTime(0,t+i*0.18);
-            g.gain.linearRampToValueAtTime(0.07,t+i*0.18+0.02);
+            g.gain.linearRampToValueAtTime(0.16,t+i*0.18+0.02);
             g.gain.exponentialRampToValueAtTime(0.001,t+i*0.18+0.14);
             osc.connect(g); g.connect(master); osc.start(t+i*0.18); osc.stop(t+i*0.18+0.16);
           }
@@ -15085,7 +15100,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
           [0,0.45,0.9,1.35].forEach((off,i)=>{
             const osc=ctx.createOscillator(); const g=ctx.createGain();
             osc.type="square"; osc.frequency.value=root*(i%2?0.5:0.75);
-            g.gain.setValueAtTime(0.045,t+off);
+            g.gain.setValueAtTime(0.13,t+off);
             g.gain.exponentialRampToValueAtTime(0.001,t+off+0.18);
             osc.connect(g); g.connect(master); osc.start(t+off); osc.stop(t+off+0.2);
           });
@@ -15101,7 +15116,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
           osc.type="sine"; osc.frequency.setValueAtTime(root*0.75,t);
           osc.frequency.linearRampToValueAtTime(root*0.9,t+1.8);
           g.gain.setValueAtTime(0,t);
-          g.gain.linearRampToValueAtTime(0.07,t+0.8);
+          g.gain.linearRampToValueAtTime(0.15,t+0.8);
           g.gain.exponentialRampToValueAtTime(0.001,t+3.5);
           osc.connect(g); g.connect(master); osc.start(t); osc.stop(t+3.7);
           scheduleRef.current=setTimeout(swell,6200);
@@ -15116,7 +15131,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
             const osc=ctx.createOscillator(); const g=ctx.createGain();
             osc.type="sine"; osc.frequency.value=root*m;
             g.gain.setValueAtTime(0,t+i*0.12);
-            g.gain.linearRampToValueAtTime(0.035,t+i*0.12+0.05);
+            g.gain.linearRampToValueAtTime(0.10,t+i*0.12+0.05);
             g.gain.exponentialRampToValueAtTime(0.001,t+i*0.12+1.2);
             osc.connect(g); g.connect(master); osc.start(t+i*0.12); osc.stop(t+i*0.12+1.4);
           });
@@ -15128,7 +15143,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
       // Slow breathing LFO for premium ambience.
       const lfo=ctx.createOscillator(); const lfoGain=ctx.createGain();
       lfo.type="sine"; lfo.frequency.value=timbre==="meditation"?0.07:0.12;
-      lfoGain.gain.value=0.025;
+      lfoGain.gain.value=0.018;
       lfo.connect(lfoGain); lfoGain.connect(master.gain); lfo.start();
       oscNodes.push(lfo,lfoGain);
 
@@ -15136,15 +15151,15 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     }catch(e){
       console.warn("Generated ambient Web Audio error:",e);
     }
-  },[cfgKey]);
+  },[cfgKey, volume]);
   const startAudio=useCallback(()=>{ const urlsToTry=[...(cfg.audioUrls||[])]; let urlIdx=0; let resolved=false; const currentKey=cfgKey; const tryNextUrl=()=>{ if(urlIdx>=urlsToTry.length){ if(!resolved){ resolved=true; startWebAudio(); } return; } const url=urlsToTry[urlIdx++]; const nextAudio=new Audio(); nextAudio.loop=true; nextAudio.volume=0; nextAudio.preload="auto"; nextAudio.crossOrigin="anonymous"; nextAudio.dataset.trackKey=currentKey; const timeo=setTimeout(()=>{ try{nextAudio.src="";}catch(e){} tryNextUrl(); },5000); nextAudio.oncanplaythrough=()=>{ clearTimeout(timeo); if(resolved)return; resolved=true; const old=audioRef.current; nextAudio.play().then(()=>{ audioRef.current=nextAudio; fadeAudio(nextAudio,0,volume,950); if(old&&old!==nextAudio){ fadeAudio(old,old.volume||volume,0,800,()=>{ try{old.pause(); old.src="";}catch(e){} }); } }).catch(()=>{ audioRef.current=null; startWebAudio(); }); }; nextAudio.onerror=()=>{ clearTimeout(timeo); tryNextUrl(); }; nextAudio.src=url; nextAudio.load(); }; if(audioRef.current&&audioRef.current.dataset.trackKey===currentKey){ audioRef.current.play().catch(()=>{}); fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450); return; } tryNextUrl(); },[cfgKey,volume,DOW,startWebAudio]);
   const stopAudio=useCallback(()=>{ if(audioRef.current){ const old=audioRef.current; fadeAudio(old,old.volume||volume,0,550,()=>{ try{old.pause(); old.currentTime=0;}catch(e){} }); } clearTimeout(scheduleRef.current); scheduleRef.current=null; if(ctxRef.current?._ambientNodes){ try{ctxRef.current._ambientNodes.forEach(n=>{try{n.stop?.();}catch(e){} try{n.disconnect?.();}catch(e){}}); ctxRef.current._ambientNodes=[];}catch(e){} } if(masterGainRef.current&&ctxRef.current){ try{ masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.8); }catch(e){} } },[volume]);
   const handlePlay=()=>{ setPlaying(true); playingRef.current=true; startAudio(); };
   const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
-  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); },[volume]);
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); if(masterGainRef.current&&ctxRef.current){ try{ masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(Math.max(0.16, volume*0.95), ctxRef.current.currentTime+0.15); }catch(e){} } },[volume]);
   useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
-  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0.16,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
+  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(Math.max(0.16, volume*0.95),ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
   useEffect(()=>{ const autoStart=()=>{ if(!playingRef.current)handlePlay(); }; document.addEventListener("click",autoStart,{once:true}); document.addEventListener("touchstart",autoStart,{once:true}); return()=>{document.removeEventListener("click",autoStart); document.removeEventListener("touchstart",autoStart);}; },[]);
   useEffect(()=>{ const onMediaPlay=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current&&playingRef.current)handleStop(); }; const onMediaStop=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current)setTimeout(()=>{ if(!playingRef.current)handlePlay(); },800); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true); document.removeEventListener("pause",onMediaStop,true); document.removeEventListener("ended",onMediaStop,true);}; },[]);
   useEffect(()=>()=>{stopAudio();},[stopAudio]);
