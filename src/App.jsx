@@ -14943,178 +14943,60 @@ function getPremiumAmbientConfig({now, weekdayCfg, festival, observances, userMo
 }
 
 function BgMusicPlayer({S, selectedLocation="austin"}){
+  const ctxRef=useRef(null);
+  const masterGainRef=useRef(null);
   const [playing,setPlaying]=useState(false);
   const [minimized,setMinimized]=useState(false);
   const [ambientMode,setAmbientMode]=useState(()=>{ try{return localStorage.getItem("vedatime_ambient_mode")||"auto";}catch(e){return"auto";} });
-  const [volume,setVolume]=useState(()=>{ try{const v=Number(localStorage.getItem("vedatime_ambient_volume")||"0.38"); return Number.isFinite(v)?Math.max(0,Math.min(0.85,v)):0.38;}catch(e){return 0.38;} });
+  const [volume,setVolume]=useState(()=>{ try{return Number(localStorage.getItem("vedatime_ambient_volume")||"0.28");}catch(e){return 0.28;} });
   const [dragPos,setDragPos]=useState({x:12,y:typeof window!=="undefined"?Math.max(60,window.innerHeight-260):500});
-  const [status,setStatus]=useState("ready");
+  const playingRef=useRef(false);
   const audioRef=useRef(null);
-  const fadeTimerRef=useRef(null);
-  const fallbackRef=useRef({ctx:null,timer:null,gain:null});
+  const scheduleRef=useRef(null);
   const draggingRef=useRef(false);
   const dragStartRef=useRef({x:0,y:0,px:0,py:0});
+  const fadeTimerRef=useRef(null);
 
-  const now=new Date();
-  const weekdayCfg=DAY_MUSIC_CONFIG[now.getDay()] || DAY_MUSIC_CONFIG[0];
-  const todayFest=FESTIVALS.find(f=>f.month===now.getMonth()&&f.day===now.getDate());
-  const todayObs=useMemo(()=>{ try { return getTodayObservances(selectedLocation || "austin") || []; } catch(e){ return []; } },[selectedLocation]);
-  const cfg=getPremiumAmbientConfig({now, weekdayCfg, festival:todayFest, observances:todayObs, userMode:ambientMode});
-  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz||261.63}|${selectedLocation}`;
+  const _now=new Date();
+  const DOW=_now.getDay();
+  const _weekdayCfg=DAY_MUSIC_CONFIG[DOW] || DAY_MUSIC_CONFIG[0];
+  const _todayFest=FESTIVALS.find(f=>f.month===_now.getMonth()&&f.day===_now.getDate());
+  const _todayObs=useMemo(()=>{ try { return getTodayObservances(selectedLocation || "austin") || []; } catch(e){ return []; } },[selectedLocation]);
+  const cfg=getPremiumAmbientConfig({now:_now, weekdayCfg:_weekdayCfg, festival:_todayFest, observances:_todayObs, userMode:ambientMode});
+  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
+  const DOW_AMBIENT = {0:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],1:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],2:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],3:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],4:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],5:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"],6:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]};
+  const AMBIENT_URLS=["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3","https://upload.wikimedia.org/wikipedia/commons/transcoded/4/46/Om-chant.ogg/Om-chant.ogg.mp3","https://upload.wikimedia.org/wikipedia/commons/c/c5/Om.ogg"];
 
-  const audioIdFromCfg=(track)=>{
-    const raw=`${track?.id||""} ${track?.deity||""} ${track?.label||""} ${track?.reason||""}`.toLowerCase();
-    if(raw.includes("shiva")||raw.includes("shivratri")||raw.includes("pradosh")) return "shiva";
-    if(raw.includes("hanuman")||raw.includes("shani")) return "hanuman";
-    if(raw.includes("ganesha")||raw.includes("ganesh")||raw.includes("chaturthi")) return "ganesha";
-    if(raw.includes("vishnu")||raw.includes("narayana")||raw.includes("ekadashi")||raw.includes("guru")) return "vishnu";
-    if(raw.includes("lakshmi")||raw.includes("diwali")||raw.includes("aarti")) return "lakshmi";
-    if(raw.includes("devi")||raw.includes("durga")||raw.includes("navratri")||raw.includes("ashtami")) return "devi";
-    if(raw.includes("krishna")||raw.includes("purnima")||raw.includes("moon")||raw.includes("janmashtami")) return "krishna";
-    if(raw.includes("surya")||raw.includes("rama")||raw.includes("morning")||raw.includes("abhijit")) return "surya";
-    if(raw.includes("meditation")||raw.includes("brahma")||raw.includes("night")) return "meditation";
-    return ambientMode && ambientMode!=="auto" ? ambientMode : "auto";
-  };
-  const trackId=audioIdFromCfg(cfg);
-  // Cache-bust per track so Vercel/browser never keeps playing an older ambient file.
-  const trackSrc=`/ambient/${trackId}.wav?v=v149-${trackId}`;
-
-  const stopFallback=()=>{
-    const fb=fallbackRef.current;
-    if(fb.timer){ clearInterval(fb.timer); fb.timer=null; }
-    if(fb.gain){ try{fb.gain.gain.setTargetAtTime(0, fb.ctx.currentTime, 0.12);}catch(e){} }
-    if(fb.ctx){ const ctx=fb.ctx; setTimeout(()=>{ try{ctx.close();}catch(e){} },250); }
-    fallbackRef.current={ctx:null,timer:null,gain:null};
-  };
-
-  const startFallback=()=>{
-    try{
-      stopFallback();
-      const Ctx=window.AudioContext || window.webkitAudioContext;
-      if(!Ctx) return;
-      const ctx=new Ctx();
-      const master=ctx.createGain();
-      master.gain.value=Math.max(0.02,Math.min(0.5,volume*0.55));
-      master.connect(ctx.destination);
-      fallbackRef.current={ctx,timer:null,gain:master};
-      const roots={auto:174.61,shiva:146.83,hanuman:196,ganesha:174.61,vishnu:164.81,lakshmi:220,devi:185,krishna:196,surya:196,meditation:136.1};
-      const scales={
-        auto:[1,1.125,1.25,1.5,1.667,2],
-        shiva:[1,1.067,1.2,1.333,1.5,1.6,2],
-        hanuman:[1,1.125,1.25,1.5,1.667,2],
-        ganesha:[1,1.125,1.25,1.333,1.5,1.667,2],
-        vishnu:[1,1.125,1.25,1.5,1.667,2],
-        lakshmi:[1,1.125,1.25,1.333,1.5,1.667,1.875,2],
-        devi:[1,1.2,1.333,1.5,1.6,1.8,2],
-        krishna:[1,1.125,1.25,1.5,1.667,2,2.25],
-        surya:[1,1.125,1.25,1.5,1.667,1.875,2],
-        meditation:[1,1.125,1.333,1.5,1.778,2]
-      };
-      const melody=[0,2,4,5,4,2,1,0,3,4,6,5,4,2,0];
-      let idx=0;
-      const playNote=()=>{
-        if(!fallbackRef.current.ctx) return;
-        const t=ctx.currentTime, root=roots[trackId]||roots.auto, scale=scales[trackId]||scales.auto;
-        const freq=root*(scale[melody[idx%melody.length]%scale.length]||1)*2;
-        idx+=1;
-        const osc=ctx.createOscillator();
-        const g=ctx.createGain();
-        const p=ctx.createStereoPanner ? ctx.createStereoPanner() : null;
-        osc.type=(trackId==="hanuman")?"square":(trackId==="shiva"||trackId==="devi"||trackId==="ganesha")?"triangle":"sine";
-        osc.frequency.setValueAtTime(freq,t);
-        g.gain.setValueAtTime(0,t);
-        g.gain.linearRampToValueAtTime(trackId==="meditation"?0.045:0.075,t+0.05);
-        g.gain.exponentialRampToValueAtTime(0.001,t+0.75);
-        osc.connect(g);
-        if(p){ p.pan.value=((idx%4)-1.5)/3; g.connect(p); p.connect(master); } else { g.connect(master); }
-        osc.start(t); osc.stop(t+0.8);
-        const drone=ctx.createOscillator();
-        const dg=ctx.createGain();
-        drone.type="sine"; drone.frequency.value=root;
-        dg.gain.setValueAtTime(0.018,t);
-        dg.gain.exponentialRampToValueAtTime(0.001,t+1.15);
-        drone.connect(dg); dg.connect(master); drone.start(t); drone.stop(t+1.2);
-        if(idx%8===0){
-          const bell=ctx.createOscillator(); const bg=ctx.createGain();
-          bell.type="sine"; bell.frequency.value=root*3.05;
-          bg.gain.setValueAtTime(0.09,t); bg.gain.exponentialRampToValueAtTime(0.001,t+1.6);
-          bell.connect(bg); bg.connect(master); bell.start(t); bell.stop(t+1.7);
-        }
-      };
-      playNote();
-      fallbackRef.current.timer=setInterval(playNote, trackId==="hanuman"||trackId==="surya"?420:trackId==="meditation"?900:560);
-      setStatus("fallback");
-    }catch(e){ console.warn("Vedatime ambient fallback failed",e); }
-  };
-
-  const hardStopAudio=()=>{
-    clearInterval(fadeTimerRef.current);
-    stopFallback();
-    const audio=audioRef.current;
-    if(audio){
-      try{ audio.pause(); audio.currentTime=0; audio.removeAttribute("src"); audio.load(); }catch(e){}
-    }
-    audioRef.current=null;
-  };
-
-  const stopAudio=(fadeMs=350)=>{
-    clearInterval(fadeTimerRef.current);
-    stopFallback();
-    const audio=audioRef.current;
-    if(!audio){ setStatus("ready"); return; }
-    const startVol=audio.volume || 0, steps=12; let step=0;
-    fadeTimerRef.current=setInterval(()=>{
-      step++;
-      try{ audio.volume=Math.max(0,startVol*(1-step/steps)); }catch(e){}
-      if(step>=steps){ clearInterval(fadeTimerRef.current); try{audio.pause(); audio.currentTime=0; audio.removeAttribute("src"); audio.load();}catch(e){} if(audioRef.current===audio) audioRef.current=null; setStatus("ready"); }
-    },Math.max(16,fadeMs/steps));
-  };
-
-  const startAudio=useCallback(()=>{
-    try{
-      // For deity changes, do a hard stop/reload. A soft fade can leave the old loop active.
-      hardStopAudio();
-      setStatus("loading");
-      const audio=new Audio(trackSrc);
-      audio.loop=true;
-      audio.preload="auto";
-      audio.volume=Math.max(0.02,Math.min(0.85,volume));
-      audioRef.current=audio;
-      audio.oncanplaythrough=()=>{ if(audioRef.current===audio) setStatus("playing"); };
-      audio.onerror=()=>{ if(audioRef.current===audio){ console.warn("Ambient file unavailable, using generated fallback:", trackSrc); startFallback(); } };
-      const p=audio.play();
-      if(p && typeof p.catch==="function"){
-        p.then(()=>setStatus("playing")).catch(err=>{ console.warn("Vedatime ambient play blocked or failed",err); startFallback(); });
-      } else setStatus("playing");
-    }catch(e){ console.warn("Vedatime ambient audio failed",e); startFallback(); }
-  },[trackSrc,volume]);
-
-  const handlePlay=()=>{ setPlaying(true); setTimeout(()=>startAudio(),0); };
-  const handleStop=()=>{ setPlaying(false); stopAudio(350); };
-
+  const fadeAudio=(audio,from,to,ms=900,onDone)=>{ try{ clearInterval(fadeTimerRef.current); }catch(e){}; if(!audio){ onDone?.(); return; } const steps=18; let i=0; audio.volume=Math.max(0,Math.min(1,from)); fadeTimerRef.current=setInterval(()=>{ i++; const t=i/steps; audio.volume=Math.max(0,Math.min(1,from+(to-from)*t)); if(i>=steps){ clearInterval(fadeTimerRef.current); onDone?.(); } },Math.max(16,ms/steps)); };
+  const getTanpuraFreqs=(root)=>[root*0.5,root*0.75,root,root*1.5,root*2];
+  const pluckString=(ctx,freq,gain,when)=>{ const master=masterGainRef.current; if(!master)return; [1,2,3,4,5].forEach((h,i)=>{ const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type="sine"; osc.frequency.value=freq*h; osc.detune.value=(Math.random()-0.5)*3; const a=gain*[1,0.45,0.2,0.1,0.05][i]; g.gain.setValueAtTime(0,when); g.gain.linearRampToValueAtTime(a,when+0.015); g.gain.exponentialRampToValueAtTime(a*0.6,when+0.4); g.gain.exponentialRampToValueAtTime(a*0.02,when+3.8-i*0.3); osc.connect(g); g.connect(master); osc.start(when); osc.stop(when+4.5); }); };
+  const startWebAudio=useCallback(()=>{ try{ if(!ctxRef.current)ctxRef.current=new(window.AudioContext||window.webkitAudioContext)(); const ctx=ctxRef.current; if(ctx.state==="suspended")ctx.resume(); if(!masterGainRef.current){ masterGainRef.current=ctx.createGain(); const lpf=ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=1800; lpf.Q.value=0.5; const delay=ctx.createDelay(0.3); delay.delayTime.value=0.18; const fbGain=ctx.createGain(); fbGain.gain.value=0.22; masterGainRef.current.connect(lpf); lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay); lpf.connect(ctx.destination); delay.connect(ctx.destination); } masterGainRef.current.gain.value=0.16; const freqs=getTanpuraFreqs(cfg.rootHz||261.63); const CYCLE=5.2; const strikes=[0,1.1,2.3,3.5,4.4]; const gains=[0.55,0.38,0.48,0.38,0.44]; if(scheduleRef.current)return; const scheduleCycle=()=>{ if(!playingRef.current){ scheduleRef.current=null; return; } const now=ctx.currentTime; strikes.forEach((offset,i)=>pluckString(ctx,freqs[i%freqs.length],gains[i%gains.length],now+offset)); scheduleRef.current=setTimeout(scheduleCycle,CYCLE*1000-100); }; scheduleCycle(); }catch(e){ console.warn("Tanpura Web Audio error:",e); } },[cfgKey]);
+  const startAudio=useCallback(()=>{ const urlsToTry=[...(cfg.audioUrls||[]),...(DOW_AMBIENT[DOW]||[]),...AMBIENT_URLS]; let urlIdx=0; let resolved=false; const currentKey=cfgKey; const tryNextUrl=()=>{ if(urlIdx>=urlsToTry.length){ if(!resolved){ resolved=true; startWebAudio(); } return; } const url=urlsToTry[urlIdx++]; const nextAudio=new Audio(); nextAudio.loop=true; nextAudio.volume=0; nextAudio.preload="auto"; nextAudio.crossOrigin="anonymous"; nextAudio.dataset.trackKey=currentKey; const timeo=setTimeout(()=>{ try{nextAudio.src="";}catch(e){} tryNextUrl(); },5000); nextAudio.oncanplaythrough=()=>{ clearTimeout(timeo); if(resolved)return; resolved=true; const old=audioRef.current; nextAudio.play().then(()=>{ audioRef.current=nextAudio; fadeAudio(nextAudio,0,volume,950); if(old&&old!==nextAudio){ fadeAudio(old,old.volume||volume,0,800,()=>{ try{old.pause(); old.src="";}catch(e){} }); } }).catch(()=>{ audioRef.current=null; startWebAudio(); }); }; nextAudio.onerror=()=>{ clearTimeout(timeo); tryNextUrl(); }; nextAudio.src=url; nextAudio.load(); }; if(audioRef.current&&audioRef.current.dataset.trackKey===currentKey){ audioRef.current.play().catch(()=>{}); fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450); return; } tryNextUrl(); },[cfgKey,volume,DOW,startWebAudio]);
+  const stopAudio=useCallback(()=>{ if(audioRef.current){ const old=audioRef.current; fadeAudio(old,old.volume||volume,0,550,()=>{ try{old.pause(); old.currentTime=0;}catch(e){} }); } clearTimeout(scheduleRef.current); scheduleRef.current=null; if(masterGainRef.current&&ctxRef.current){ try{ masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.8); }catch(e){} } },[volume]);
+  const handlePlay=()=>{ setPlaying(true); playingRef.current=true; startAudio(); };
+  const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
-  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain && fallbackRef.current.ctx){ try{fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.05);}catch(e){} } },[volume]);
-  useEffect(()=>{ if(playing) startAudio(); },[cfgKey,startAudio,playing]);
-  useEffect(()=>{ if(!AudioEngine?.registerAmbient) return; AudioEngine.registerAmbient(()=>{ if(audioRef.current) audioRef.current.volume=0; if(fallbackRef.current.gain&&fallbackRef.current.ctx) fallbackRef.current.gain.gain.setTargetAtTime(0,fallbackRef.current.ctx.currentTime,0.08); },()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain&&fallbackRef.current.ctx&&playing) fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.08); }); },[playing,volume]);
-  useEffect(()=>{ const onMediaPlay=(e)=>{ const tag=e?.target?.tagName; if((tag==="AUDIO"||tag==="VIDEO") && e.target!==audioRef.current){ if(audioRef.current) audioRef.current.volume=0; if(fallbackRef.current.gain&&fallbackRef.current.ctx) fallbackRef.current.gain.gain.setTargetAtTime(0,fallbackRef.current.ctx.currentTime,0.08); } }; const onMediaStop=()=>{ if(audioRef.current && playing) audioRef.current.volume=Math.max(0.02,Math.min(0.85,volume)); if(fallbackRef.current.gain&&fallbackRef.current.ctx&&playing) fallbackRef.current.gain.gain.setTargetAtTime(Math.max(0.02,Math.min(0.5,volume*0.55)),fallbackRef.current.ctx.currentTime,0.08); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true);document.removeEventListener("pause",onMediaStop,true);document.removeEventListener("ended",onMediaStop,true);}; },[playing,volume]);
-  useEffect(()=>()=>{ try{stopAudio(0);}catch(e){} },[]);
-
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); },[volume]);
+  useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
+  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0.16,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
+  useEffect(()=>{ const autoStart=()=>{ if(!playingRef.current)handlePlay(); }; document.addEventListener("click",autoStart,{once:true}); document.addEventListener("touchstart",autoStart,{once:true}); return()=>{document.removeEventListener("click",autoStart); document.removeEventListener("touchstart",autoStart);}; },[]);
+  useEffect(()=>{ const onMediaPlay=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current&&playingRef.current)handleStop(); }; const onMediaStop=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current)setTimeout(()=>{ if(!playingRef.current)handlePlay(); },800); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true); document.removeEventListener("pause",onMediaStop,true); document.removeEventListener("ended",onMediaStop,true);}; },[]);
+  useEffect(()=>()=>{stopAudio();},[stopAudio]);
   const onDragStart=(e)=>{ draggingRef.current=true; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; dragStartRef.current={x:clientX,y:clientY,px:dragPos.x,py:dragPos.y}; e.preventDefault(); };
   const onDragMove=useCallback((e)=>{ if(!draggingRef.current)return; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; const dx=clientX-dragStartRef.current.x; const dy=clientY-dragStartRef.current.y; setDragPos({x:Math.max(8,Math.min(window.innerWidth-250,dragStartRef.current.px+dx)),y:Math.max(8,Math.min(window.innerHeight-250,dragStartRef.current.py+dy))}); },[]);
   const onDragEnd=()=>{ draggingRef.current=false; };
-  useEffect(()=>{ document.addEventListener("mousemove",onDragMove); document.addEventListener("mouseup",onDragEnd); document.addEventListener("touchmove",onDragMove,{passive:false}); document.addEventListener("touchend",onDragEnd); return()=>{document.removeEventListener("mousemove",onDragMove);document.removeEventListener("mouseup",onDragEnd);document.removeEventListener("touchmove",onDragMove);document.removeEventListener("touchend",onDragEnd);}; },[onDragMove]);
-
+  useEffect(()=>{ document.addEventListener("mousemove",onDragMove); document.addEventListener("mouseup",onDragEnd); document.addEventListener("touchmove",onDragMove,{passive:false}); document.addEventListener("touchend",onDragEnd); return()=>{document.removeEventListener("mousemove",onDragMove); document.removeEventListener("mouseup",onDragEnd); document.removeEventListener("touchmove",onDragMove); document.removeEventListener("touchend",onDragEnd);}; },[onDragMove]);
   const ambientOptions=[["auto","Auto"],["shiva","Shiva"],["hanuman","Hanuman"],["ganesha","Ganesha"],["vishnu","Vishnu"],["lakshmi","Lakshmi"],["devi","Devi"],["krishna","Krishna"],["surya","Surya"],["meditation","Meditation"]];
-  const statusText=status==="loading"?"loading track":status==="fallback"?"generated backup":playing?"playing":"ready";
   if(minimized)return <div onClick={()=>setMinimized(false)} style={{position:"fixed",top:dragPos.y,left:dragPos.x,zIndex:9999,width:46,height:46,borderRadius:"50%",pointerEvents:"auto",background:playing?`linear-gradient(135deg,${cfg.color},${cfg.color}88)`:"rgba(15,15,35,0.92)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",border:`2px solid ${playing?cfg.color+"88":"rgba(255,255,255,0.12)"}`,backdropFilter:"blur(12px)"}}>{playing?"🎵":"🔇"}</div>;
   return <div style={{position:"fixed",left:dragPos.x,top:dragPos.y,zIndex:9999,pointerEvents:"auto",background:"rgba(8,6,22,0.97)",backdropFilter:"blur(20px)",border:`1px solid ${cfg.color}44`,borderRadius:20,padding:"12px 14px",boxShadow:"0 8px 40px rgba(0,0,0,0.65)",minWidth:220,maxWidth:240,touchAction:"none",userSelect:"none"}}>
-    <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}55`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:17}}>{cfg.emoji||"🎵"}</div><div><p style={{color:"#fff",fontSize:11,fontWeight:900,margin:0,lineHeight:1.15}}>Sacred Ambient</p><p style={{color:cfg.color,fontSize:9,fontWeight:800,margin:"1px 0 0",lineHeight:1.2}}>{cfg.label||weekdayCfg.label}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
+    <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cfg.emoji}</div><div><p style={{color:cfg.color,fontSize:10,fontWeight:900,margin:0,lineHeight:1.2}}>{cfg.label}</p><p style={{color:"rgba(255,255,255,0.34)",fontSize:8,margin:0}}>{cfg.reason||cfg.desc}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
     {playing&&<div style={{display:"flex",gap:2,alignItems:"flex-end",height:14,marginBottom:7,justifyContent:"center"}}>{[5,8,12,10,7,14,9,6].map((h,i)=><div key={i} style={{width:3,borderRadius:2,background:cfg.color,animation:`tp${i%4} ${0.5+i*0.11}s ease-in-out infinite alternate`,height:h+"px",opacity:0.8}}/>)}</div>}
-    <div style={{display:"grid",gridTemplateColumns:"1fr 74px",gap:6,marginBottom:7}}><select value={ambientMode} onChange={e=>setAmbientMode(e.target.value)} style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${cfg.color}33`,color:"#fff",borderRadius:10,padding:"6px 7px",fontSize:10,fontWeight:800,outline:"none"}}>{ambientOptions.map(([v,l])=><option key={v} value={v} style={{color:"#111"}}>{l}</option>)}</select><input type="range" min="0" max="0.85" step="0.01" value={volume} onChange={e=>setVolume(Number(e.target.value))} title="Ambient volume" /></div>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 74px",gap:6,marginBottom:7}}><select value={ambientMode} onChange={e=>setAmbientMode(e.target.value)} style={{background:"rgba(255,255,255,0.07)",border:`1px solid ${cfg.color}33`,color:"#fff",borderRadius:10,padding:"6px 7px",fontSize:10,fontWeight:800,outline:"none"}}>{ambientOptions.map(([v,l])=><option key={v} value={v} style={{color:"#111"}}>{l}</option>)}</select><input type="range" min="0" max="0.5" step="0.01" value={volume} onChange={e=>setVolume(Number(e.target.value))} title="Ambient volume" /></div>
     <button onClick={playing?handleStop:handlePlay} style={{width:"100%",padding:"7px 0",borderRadius:10,border:"none",background:playing?`${cfg.color}22`:`linear-gradient(135deg,${cfg.color},${cfg.color}CC)`,color:playing?cfg.color:"#fff",fontSize:11,fontWeight:900,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:5,boxShadow:playing?"none":`0 2px 10px ${cfg.color}44`}}>{playing?<><span>⏹</span><span>Stop Music</span></>:<><span>▶</span><span>Play Sacred Music</span></>}</button>
     <a href={`https://www.youtube.com/results?search_query=${encodeURIComponent(cfg.ytQ||"Hindu devotional bhajan")}`} target="_blank" rel="noopener noreferrer" style={{display:"block",width:"100%",marginTop:5,padding:"5px 0",borderRadius:9,border:`1px solid ${cfg.color}44`,background:"transparent",color:cfg.color,fontSize:10,fontWeight:800,cursor:"pointer",textAlign:"center",textDecoration:"none"}}>🎬 Matching Bhajan</a>
-    <p style={{color:"rgba(255,255,255,0.32)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Track: {trackId} · {statusText} · Auto follows festival, tithi, muhurat, time and weekday</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
+    <p style={{color:"rgba(255,255,255,0.25)",fontSize:8,margin:"6px 0 0",textAlign:"center",lineHeight:1.35}}>Premium engine: festival → tithi → muhurat → time mood → weekday · crossfade on change</p><style>{`@keyframes tp0{from{height:4px}to{height:14px}}@keyframes tp1{from{height:10px}to{height:4px}}@keyframes tp2{from{height:3px}to{height:16px}}@keyframes tp3{from{height:12px}to{height:5px}}`}</style></div>;
 }
+
 
 /* ── Yoga pose inline SVG generator — chakra-colored, never fails, no external URLs ── */
 const CHAKRA_PALETTE = {
@@ -16904,7 +16786,7 @@ export default function App(){
         {/* Global VideoModal — one video player for the entire app, portal-rendered */}
         {globalVideo&&<GlobalVideoModal data={globalVideo} onClose={()=>setGlobalVideo(null)} S={S}/>}
         <NowPlayingBar S={S} bp={bp}/>
-        <BgMusicPlayer S={S} selectedLocation={selectedLocation}/>
+        <BgMusicPlayer S={S}/>
       </div>
     </ErrorBoundary>
   );
