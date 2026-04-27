@@ -14878,29 +14878,16 @@ const DAY_MUSIC_CONFIG=[
    4) Active muhurat/time-of-day, 5) Weekday deity, 6) Tanpura fallback.
 ══════════════════════════════════════════════════════ */
 const PREMIUM_AMBIENT_TRACKS = {
-  default: {id:"auto", profile:"default", deity:"Vedatime", emoji:"🎶", color:"#8E66FF", label:"Auto Sacred Ambient", rootHz:261.63, desc:"Automatic festival, observance, muhurat and weekday music", ytQ:"Hindu devotional instrumental ambient", audioUrls:[]},
-  shiva: {id:"shiva", profile:"shiva", deity:"Shiva", emoji:"🔱", color:"#87CEEB", label:"Shiva Dhyan", rootHz:220.00, desc:"Deep Shiva tanpura with quiet damaru pulse", ytQ:"Om Namah Shivaya slow chanting devotional", audioUrls:[]},
-  hanuman: {id:"hanuman", profile:"hanuman", deity:"Hanuman", emoji:"🙏", color:"#FF4444", label:"Hanuman Strength", rootHz:329.63, desc:"Strong devotional tanpura with steady pulse", ytQ:"Hanuman Chalisa slow devotional", audioUrls:[]},
-  ganesha: {id:"ganesha", profile:"ganesha", deity:"Ganesha", emoji:"🐘", color:"#00BB55", label:"Ganesha Mantra", rootHz:392.00, desc:"Bright Ganesha ambience with soft bell accents", ytQ:"Ganesh mantra Sankashti Chaturthi devotional", audioUrls:[]},
-  vishnu: {id:"vishnu", profile:"vishnu", deity:"Vishnu · Narayana", emoji:"🐚", color:"#4F7CFF", label:"Vishnu Sahasranama", rootHz:246.94, desc:"Peaceful Vishnu ambience for Ekadashi", ytQ:"Vishnu sahasranama Ekadashi bhajan", audioUrls:[]},
-  lakshmi: {id:"lakshmi", profile:"lakshmi", deity:"Lakshmi", emoji:"✨", color:"#FF69B4", label:"Lakshmi Aarti", rootHz:349.23, desc:"Warm evening aarti shimmer", ytQ:"Om Jai Lakshmi Mata aarti devotional", audioUrls:[]},
-  devi: {id:"devi", profile:"devi", deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Devi Shakti", rootHz:349.23, desc:"Shakti ambience for Ashtami and Navratri", ytQ:"Durga mantra Ashtami devotional", audioUrls:[]},
-  krishna: {id:"krishna", profile:"krishna", deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Moonlight Krishna", rootHz:261.63, desc:"Soft flute-like moonlight ambience", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:[]},
-  surya: {id:"surya", profile:"surya", deity:"Surya · Rama", emoji:"☀️", color:"#FF8C42", label:"Surya Morning", rootHz:294.00, desc:"Bright morning Surya ambience", ytQ:"Surya mantra morning bhajan Jai Surya Narayan", audioUrls:[]},
-  meditation: {id:"meditation", profile:"meditation", deity:"Meditation", emoji:"🧘", color:"#68B3FF", label:"Deep Meditation", rootHz:196.00, desc:"Low calm tanpura for meditation", ytQ:"Indian tanpura meditation ambient", audioUrls:[]},
-};
-
-const AMBIENT_SOUND_PROFILES = {
-  default:    {wave:"sine",     master:0.15, intervals:[0.50,0.75,1.00,1.50,2.00], strikes:[0,1.1,2.3,3.5,4.4], gains:[0.52,0.34,0.46,0.34,0.40], cycle:5.2, bell:false},
-  shiva:      {wave:"sine",     master:0.17, intervals:[0.50,1.00,1.125,1.50,2.00], strikes:[0,1.4,2.8,4.2],     gains:[0.60,0.42,0.36,0.48],      cycle:5.6, bell:false},
-  hanuman:    {wave:"triangle", master:0.16, intervals:[0.50,1.00,1.25,1.50,2.00],  strikes:[0,0.9,1.8,3.0,4.1], gains:[0.58,0.38,0.46,0.38,0.44], cycle:4.8, bell:false},
-  ganesha:    {wave:"sine",     master:0.15, intervals:[0.50,0.80,1.00,1.25,1.50], strikes:[0,1.0,2.1,3.3,4.6], gains:[0.48,0.34,0.42,0.34,0.38], cycle:5.4, bell:true},
-  vishnu:     {wave:"sine",     master:0.14, intervals:[0.50,0.75,1.00,1.333,1.50],strikes:[0,1.3,2.6,3.9,5.0], gains:[0.46,0.32,0.42,0.30,0.36], cycle:6.0, bell:false},
-  lakshmi:    {wave:"sine",     master:0.14, intervals:[0.50,0.75,1.00,1.20,1.50], strikes:[0,1.0,2.2,3.4,4.5], gains:[0.44,0.32,0.40,0.32,0.36], cycle:5.5, bell:true},
-  devi:       {wave:"triangle", master:0.16, intervals:[0.50,1.00,1.20,1.50,1.875],strikes:[0,0.8,1.9,3.1,4.2], gains:[0.56,0.38,0.44,0.36,0.42], cycle:5.0, bell:true},
-  krishna:    {wave:"sine",     master:0.13, intervals:[0.50,0.75,1.00,1.125,1.50],strikes:[0,1.2,2.4,3.7,4.9], gains:[0.42,0.30,0.36,0.28,0.34], cycle:5.8, bell:"flute"},
-  surya:      {wave:"sine",     master:0.15, intervals:[0.50,0.80,1.00,1.25,1.60], strikes:[0,0.95,2.0,3.1,4.25],gains:[0.50,0.34,0.42,0.34,0.38], cycle:5.1, bell:true},
-  meditation: {wave:"sine",     master:0.12, intervals:[0.50,0.75,1.00,1.50],      strikes:[0,1.6,3.2,4.8],     gains:[0.40,0.26,0.34,0.28],      cycle:6.4, bell:false},
+  default: {id:"auto", deity:"Vedatime", emoji:"🎶", color:"#8E66FF", label:"Auto Sacred Ambient", rootHz:261.63, desc:"Automatic festival, observance, muhurat and weekday music", ytQ:"Hindu devotional instrumental ambient", audioUrls:[]},
+  shiva: {id:"shiva", deity:"Shiva", emoji:"🔱", color:"#87CEEB", label:"Shiva Dhyan", rootHz:220.00, desc:"Om Namah Shivaya ambience", ytQ:"Om Namah Shivaya slow chanting devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  hanuman: {id:"hanuman", deity:"Hanuman", emoji:"🙏", color:"#FF4444", label:"Hanuman Strength", rootHz:329.63, desc:"Strength and protection soundscape", ytQ:"Hanuman Chalisa slow devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  ganesha: {id:"ganesha", deity:"Ganesha", emoji:"🐘", color:"#00BB55", label:"Ganesha Mantra", rootHz:392.00, desc:"Obstacle-clearing Ganesha ambience", ytQ:"Ganesh mantra Sankashti Chaturthi devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  vishnu: {id:"vishnu", deity:"Vishnu · Narayana", emoji:"🐚", color:"#4F7CFF", label:"Vishnu Sahasranama", rootHz:246.94, desc:"Peace, preservation and Ekadashi devotion", ytQ:"Vishnu sahasranama Ekadashi bhajan", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  lakshmi: {id:"lakshmi", deity:"Lakshmi", emoji:"✨", color:"#FF69B4", label:"Lakshmi Aarti", rootHz:349.23, desc:"Abundance, grace and Friday devotion", ytQ:"Om Jai Lakshmi Mata aarti devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
+  devi: {id:"devi", deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Devi Shakti", rootHz:349.23, desc:"Ashtami, Navratri and Shakti ambience", ytQ:"Durga mantra Ashtami devotional", audioUrls:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"]},
+  krishna: {id:"krishna", deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Moonlight Krishna", rootHz:261.63, desc:"Purnima and calm night devotion", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  surya: {id:"surya", deity:"Surya · Rama", emoji:"☀️", color:"#FF8C42", label:"Surya Morning", rootHz:294.00, desc:"Morning brightness and Surya devotion", ytQ:"Surya mantra morning bhajan Jai Surya Narayan", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
+  meditation: {id:"meditation", deity:"Meditation", emoji:"🧘", color:"#68B3FF", label:"Deep Meditation", rootHz:196.00, desc:"Soft tanpura-style focus and relaxation", ytQ:"Indian tanpura meditation ambient", audioUrls:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]},
 };
 
 const OBSERVANCE_MUSIC_RULES = [
@@ -14966,10 +14953,10 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const playingRef=useRef(false);
   const audioRef=useRef(null);
   const scheduleRef=useRef(null);
-  const activeWebAudioKeyRef=useRef(null);
   const draggingRef=useRef(false);
   const dragStartRef=useRef({x:0,y:0,px:0,py:0});
   const fadeTimerRef=useRef(null);
+  const activeAmbientKeyRef=useRef("");
 
   const _now=new Date();
   const DOW=_now.getDay();
@@ -14977,24 +14964,159 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const _todayFest=FESTIVALS.find(f=>f.month===_now.getMonth()&&f.day===_now.getDate());
   const _todayObs=useMemo(()=>{ try { return getTodayObservances(selectedLocation || "austin") || []; } catch(e){ return []; } },[selectedLocation]);
   const cfg=getPremiumAmbientConfig({now:_now, weekdayCfg:_weekdayCfg, festival:_todayFest, observances:_todayObs, userMode:ambientMode});
-  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.profile||"default"}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
-  // Keep ambient music local/generated so every deity mode is genuinely different.
-  // External fallback MP3s were removed here because most of them pointed to the same Om track.
+  const cfgKey=`${ambientMode}|${cfg.id||cfg.label}|${cfg.rootHz}|${(cfg.audioUrls||[]).join(",")}`;
+  const DOW_AMBIENT = {0:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],1:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],2:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],3:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],4:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"],5:["https://archive.org/download/lakshmi-aarti-ambient/lakshmi_aarti.mp3"],6:["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3"]};
+  const AMBIENT_URLS=["https://archive.org/download/om-chanting-108-times/om_chanting_108_times.mp3","https://upload.wikimedia.org/wikipedia/commons/transcoded/4/46/Om-chant.ogg/Om-chant.ogg.mp3","https://upload.wikimedia.org/wikipedia/commons/c/c5/Om.ogg"];
 
   const fadeAudio=(audio,from,to,ms=900,onDone)=>{ try{ clearInterval(fadeTimerRef.current); }catch(e){}; if(!audio){ onDone?.(); return; } const steps=18; let i=0; audio.volume=Math.max(0,Math.min(1,from)); fadeTimerRef.current=setInterval(()=>{ i++; const t=i/steps; audio.volume=Math.max(0,Math.min(1,from+(to-from)*t)); if(i>=steps){ clearInterval(fadeTimerRef.current); onDone?.(); } },Math.max(16,ms/steps)); };
-  const getAmbientProfile=()=>AMBIENT_SOUND_PROFILES[cfg.profile||cfg.id] || AMBIENT_SOUND_PROFILES.default;
-  const getTanpuraFreqs=(root,profile)=>profile.intervals.map(mult=>root*mult);
-  const pluckString=(ctx,freq,gain,when,profile)=>{ const master=masterGainRef.current; if(!master)return; [1,2,3,4,5].forEach((h,i)=>{ const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type=profile.wave||"sine"; osc.frequency.value=freq*h; osc.detune.value=(Math.random()-0.5)*2; const a=gain*[1,0.38,0.16,0.075,0.035][i]; g.gain.setValueAtTime(0.0001,when); g.gain.linearRampToValueAtTime(a,when+0.018); g.gain.exponentialRampToValueAtTime(Math.max(0.0001,a*0.55),when+0.45); g.gain.exponentialRampToValueAtTime(0.0001,when+3.6-i*0.25); osc.connect(g); g.connect(master); osc.start(when); osc.stop(when+4.3); }); };
-  const addAccent=(ctx,when,profile)=>{ const master=masterGainRef.current; if(!master||!profile.bell)return; const osc=ctx.createOscillator(); const g=ctx.createGain(); osc.type="sine"; osc.frequency.value=profile.bell==="flute" ? (cfg.rootHz||261.63)*2.25 : (cfg.rootHz||261.63)*3; g.gain.setValueAtTime(0.0001,when); g.gain.linearRampToValueAtTime(profile.bell==="flute"?0.035:0.025,when+0.04); g.gain.exponentialRampToValueAtTime(0.0001,when+(profile.bell==="flute"?1.2:0.75)); osc.connect(g); g.connect(master); osc.start(when); osc.stop(when+1.4); };
-  const startWebAudio=useCallback(()=>{ try{ const profile=getAmbientProfile(); if(!ctxRef.current)ctxRef.current=new(window.AudioContext||window.webkitAudioContext)(); const ctx=ctxRef.current; if(ctx.state==="suspended")ctx.resume(); if(!masterGainRef.current){ masterGainRef.current=ctx.createGain(); const lpf=ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=1900; lpf.Q.value=0.45; const delay=ctx.createDelay(0.35); delay.delayTime.value=0.18; const fbGain=ctx.createGain(); fbGain.gain.value=0.18; masterGainRef.current.connect(lpf); lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay); lpf.connect(ctx.destination); delay.connect(ctx.destination); } if(scheduleRef.current&&activeWebAudioKeyRef.current===cfgKey)return; clearTimeout(scheduleRef.current); scheduleRef.current=null; activeWebAudioKeyRef.current=cfgKey; masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime); masterGainRef.current.gain.setTargetAtTime((profile.master||0.14)*(volume/0.28),ctx.currentTime,0.35); const freqs=getTanpuraFreqs(cfg.rootHz||261.63,profile); const scheduleCycle=()=>{ if(!playingRef.current){ scheduleRef.current=null; return; } const now=ctx.currentTime; profile.strikes.forEach((offset,i)=>{ pluckString(ctx,freqs[i%freqs.length],profile.gains[i%profile.gains.length],now+offset,profile); if(profile.bell && i===2) addAccent(ctx,now+offset+0.18,profile); }); scheduleRef.current=setTimeout(scheduleCycle,(profile.cycle||5.4)*1000-100); }; scheduleCycle(); }catch(e){ console.warn("Tanpura Web Audio error:",e); } },[cfgKey,volume]);
-  const startAudio=useCallback(()=>{ const urlsToTry=[...(cfg.audioUrls||[])]; let urlIdx=0; let resolved=false; const currentKey=cfgKey; const tryNextUrl=()=>{ if(urlIdx>=urlsToTry.length){ if(!resolved){ resolved=true; if(audioRef.current){ const old=audioRef.current; fadeAudio(old,old.volume||volume,0,450,()=>{ try{old.pause(); old.src="";}catch(e){} }); audioRef.current=null; } startWebAudio(); } return; } const url=urlsToTry[urlIdx++]; const nextAudio=new Audio(); nextAudio.loop=true; nextAudio.volume=0; nextAudio.preload="auto"; nextAudio.crossOrigin="anonymous"; nextAudio.dataset.trackKey=currentKey; const timeo=setTimeout(()=>{ try{nextAudio.src="";}catch(e){} tryNextUrl(); },5000); nextAudio.oncanplaythrough=()=>{ clearTimeout(timeo); if(resolved)return; resolved=true; const old=audioRef.current; clearTimeout(scheduleRef.current); scheduleRef.current=null; activeWebAudioKeyRef.current=null; nextAudio.play().then(()=>{ audioRef.current=nextAudio; fadeAudio(nextAudio,0,volume,950); if(old&&old!==nextAudio){ fadeAudio(old,old.volume||volume,0,800,()=>{ try{old.pause(); old.src="";}catch(e){} }); } }).catch(()=>{ audioRef.current=null; startWebAudio(); }); }; nextAudio.onerror=()=>{ clearTimeout(timeo); tryNextUrl(); }; nextAudio.src=url; nextAudio.load(); }; if(audioRef.current&&audioRef.current.dataset.trackKey===currentKey){ audioRef.current.play().catch(()=>{}); fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450); return; } tryNextUrl(); },[cfgKey,volume,startWebAudio]);
-  const stopAudio=useCallback(()=>{ if(audioRef.current){ const old=audioRef.current; fadeAudio(old,old.volume||volume,0,550,()=>{ try{old.pause(); old.currentTime=0;}catch(e){} }); } clearTimeout(scheduleRef.current); scheduleRef.current=null; activeWebAudioKeyRef.current=null; if(masterGainRef.current&&ctxRef.current){ try{ masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.8); }catch(e){} } },[volume]);
+
+  /* Stable v153 ambient engine
+     - Preserves your original UX: starts after first tap/click, pauses during other media, resumes after.
+     - Fixes the real bug: changing deity/festival now rebuilds the WebAudio schedule instead of reusing the same Om MP3.
+     - No remote MP3s and no public/ambient folder required. */
+  const getAmbientProfile=(track)=>{
+    const text=((track?.id||"")+" "+(track?.label||"")+" "+(track?.deity||"")).toLowerCase();
+    if(/shiva|pradosh|shivratri|bhairav/.test(text)) return {root:220.00, wave:"sine", cycle:6.2, strikes:[0,1.45,3.05,4.8], intervals:[0.5,1,1.5,2], gains:[0.40,0.34,0.28,0.22], filter:1250, delay:0.24, feedback:0.18};
+    if(/hanuman|strength|shani/.test(text)) return {root:329.63, wave:"triangle", cycle:4.8, strikes:[0,0.85,1.7,3.15,4.0], intervals:[0.5,1,1.25,1.5,2], gains:[0.34,0.28,0.22,0.28,0.18], filter:1500, delay:0.16, feedback:0.16};
+    if(/ganesha|chaturthi|vinayaka/.test(text)) return {root:392.00, wave:"sine", cycle:5.4, strikes:[0,1.05,2.55,3.85,4.65], intervals:[0.5,1,1.125,1.5,2], gains:[0.35,0.30,0.22,0.26,0.18], filter:1700, delay:0.18, feedback:0.18};
+    if(/vishnu|narayana|ekadashi|guru|bhupali/.test(text)) return {root:246.94, wave:"sine", cycle:5.8, strikes:[0,1.25,2.7,4.15,5.0], intervals:[0.5,1,1.125,1.5,2], gains:[0.36,0.30,0.20,0.25,0.18], filter:1550, delay:0.22, feedback:0.20};
+    if(/lakshmi|diwali|aarti|friday/.test(text)) return {root:349.23, wave:"sine", cycle:5.0, strikes:[0,0.95,1.9,3.05,4.1], intervals:[0.5,1,1.25,1.5,2], gains:[0.32,0.28,0.24,0.22,0.20], filter:1900, delay:0.20, feedback:0.22};
+    if(/devi|durga|ashtami|navratri|shakti/.test(text)) return {root:349.23, wave:"triangle", cycle:5.2, strikes:[0,0.8,1.7,2.9,4.15], intervals:[0.5,1,1.2,1.5,2], gains:[0.36,0.30,0.22,0.26,0.18], filter:1850, delay:0.18, feedback:0.20};
+    if(/krishna|purnima|moon|chandra|holi|janmashtami/.test(text)) return {root:261.63, wave:"sine", cycle:6.4, strikes:[0,1.6,3.0,4.8,5.6], intervals:[0.5,1,1.125,1.5,2], gains:[0.30,0.26,0.22,0.20,0.16], filter:1350, delay:0.28, feedback:0.24};
+    if(/surya|rama|morning|abhijit/.test(text)) return {root:294.00, wave:"triangle", cycle:5.1, strikes:[0,0.95,2.0,3.2,4.25], intervals:[0.5,1,1.333,1.5,2], gains:[0.34,0.30,0.22,0.22,0.18], filter:1750, delay:0.17, feedback:0.16};
+    if(/meditation|brahma|night/.test(text)) return {root:196.00, wave:"sine", cycle:7.2, strikes:[0,1.9,3.75,5.6], intervals:[0.5,1,1.5,2], gains:[0.30,0.24,0.20,0.16], filter:1100, delay:0.30, feedback:0.22};
+    return {root:cfg.rootHz||261.63, wave:"sine", cycle:5.6, strikes:[0,1.1,2.45,3.7,4.8], intervals:[0.5,0.75,1,1.5,2], gains:[0.34,0.26,0.24,0.20,0.16], filter:1500, delay:0.20, feedback:0.18};
+  };
+
+  const resetHtmlAudio=()=>{
+    if(audioRef.current){
+      const old=audioRef.current;
+      audioRef.current=null;
+      try{ old.pause(); old.removeAttribute("src"); old.load?.(); }catch(e){}
+    }
+  };
+
+  const ensureWebAudioGraph=(profile)=>{
+    if(!ctxRef.current) ctxRef.current=new(window.AudioContext||window.webkitAudioContext)();
+    const ctx=ctxRef.current;
+    if(ctx.state==="suspended") ctx.resume();
+    if(!masterGainRef.current){
+      const master=ctx.createGain();
+      const lpf=ctx.createBiquadFilter();
+      const delay=ctx.createDelay(0.45);
+      const fbGain=ctx.createGain();
+      lpf.type="lowpass";
+      master.connect(lpf);
+      lpf.connect(delay);
+      delay.connect(fbGain);
+      fbGain.connect(delay);
+      lpf.connect(ctx.destination);
+      delay.connect(ctx.destination);
+      masterGainRef.current=master;
+      master._filter=lpf;
+      master._delay=delay;
+      master._feedback=fbGain;
+    }
+    try{
+      masterGainRef.current._filter.frequency.setTargetAtTime(profile.filter||1500,ctx.currentTime,0.2);
+      masterGainRef.current._delay.delayTime.setTargetAtTime(profile.delay||0.2,ctx.currentTime,0.2);
+      masterGainRef.current._feedback.gain.setTargetAtTime(profile.feedback||0.18,ctx.currentTime,0.2);
+    }catch(e){}
+    return ctx;
+  };
+
+  const pluckString=(ctx,freq,gain,when,wave="sine",dur=4.2)=>{
+    const master=masterGainRef.current;
+    if(!master) return;
+    [1,2,3,4].forEach((h,i)=>{
+      const osc=ctx.createOscillator();
+      const g=ctx.createGain();
+      osc.type=wave;
+      osc.frequency.setValueAtTime(freq*h,when);
+      osc.detune.value=(Math.random()-0.5)*2.5;
+      const a=gain*[1,0.38,0.16,0.07][i];
+      g.gain.setValueAtTime(0.0001,when);
+      g.gain.linearRampToValueAtTime(a,when+0.018);
+      g.gain.exponentialRampToValueAtTime(Math.max(0.0001,a*0.50),when+0.55);
+      g.gain.exponentialRampToValueAtTime(0.0001,when+dur);
+      osc.connect(g);
+      g.connect(master);
+      osc.start(when);
+      osc.stop(when+dur+0.08);
+    });
+  };
+
+  const stopScheduledWebAudio=(fadeMs=350)=>{
+    if(scheduleRef.current){ clearTimeout(scheduleRef.current); scheduleRef.current=null; }
+    if(masterGainRef.current&&ctxRef.current){
+      try{
+        const ctx=ctxRef.current;
+        masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+        masterGainRef.current.gain.setTargetAtTime(0.0001,ctx.currentTime,Math.max(0.03,fadeMs/1000/3));
+      }catch(e){}
+    }
+  };
+
+  const startWebAudio=useCallback(()=>{
+    try{
+      resetHtmlAudio();
+      const profile=getAmbientProfile(cfg);
+      const ctx=ensureWebAudioGraph(profile);
+      if(!playingRef.current) return;
+      if(scheduleRef.current){ clearTimeout(scheduleRef.current); scheduleRef.current=null; }
+      activeAmbientKeyRef.current=cfgKey;
+      const targetGain=Math.max(0.015,Math.min(0.42,volume))*0.58;
+      try{
+        masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime);
+        masterGainRef.current.gain.setTargetAtTime(targetGain,ctx.currentTime,0.35);
+      }catch(e){}
+      const scheduleCycle=()=>{
+        if(!playingRef.current || activeAmbientKeyRef.current!==cfgKey){ scheduleRef.current=null; return; }
+        const now=ctx.currentTime+0.04;
+        profile.strikes.forEach((offset,i)=>{
+          const interval=profile.intervals[i%profile.intervals.length]||1;
+          const gain=profile.gains[i%profile.gains.length]||0.22;
+          pluckString(ctx,profile.root*interval,gain,now+offset,profile.wave,Math.max(3.2,profile.cycle-0.35));
+        });
+        scheduleRef.current=setTimeout(scheduleCycle,Math.max(1800,(profile.cycle||5.5)*1000-120));
+      };
+      scheduleCycle();
+    }catch(e){ console.warn("Vedatime ambient WebAudio error:",e); }
+  },[cfgKey,volume]);
+
+  const startAudio=useCallback(()=>{
+    if(activeAmbientKeyRef.current===cfgKey && scheduleRef.current){
+      if(masterGainRef.current&&ctxRef.current){
+        try{
+          const targetGain=Math.max(0.015,Math.min(0.42,volume))*0.58;
+          masterGainRef.current.gain.setTargetAtTime(targetGain,ctxRef.current.currentTime,0.25);
+        }catch(e){}
+      }
+      return;
+    }
+    stopScheduledWebAudio(250);
+    setTimeout(()=>{ if(playingRef.current) startWebAudio(); },80);
+  },[cfgKey,volume,startWebAudio]);
+
+  const stopAudio=useCallback(()=>{
+    activeAmbientKeyRef.current="";
+    resetHtmlAudio();
+    stopScheduledWebAudio(450);
+  },[]);
+
   const handlePlay=()=>{ setPlaying(true); playingRef.current=true; startAudio(); };
   const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
+
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
-  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); if(masterGainRef.current&&ctxRef.current&&playingRef.current){ try{ const profile=getAmbientProfile(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.setTargetAtTime((profile.master||0.14)*(volume/0.28),ctxRef.current.currentTime,0.25); }catch(e){} } },[volume,cfgKey]);
-  useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
-  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0.16,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
+  useEffect(()=>{
+    try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){};
+    if(masterGainRef.current&&ctxRef.current){
+      try{ masterGainRef.current.gain.setTargetAtTime(Math.max(0.015,Math.min(0.42,volume))*0.58,ctxRef.current.currentTime,0.25); }catch(e){}
+    }
+    if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350);
+  },[volume]);
+  useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey,startAudio]);
+  useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.setTargetAtTime(0.0001,ctxRef.current.currentTime,0.25);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.setTargetAtTime(Math.max(0.015,Math.min(0.42,volume))*0.58,ctxRef.current.currentTime,0.35);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
   useEffect(()=>{ const autoStart=()=>{ if(!playingRef.current)handlePlay(); }; document.addEventListener("click",autoStart,{once:true}); document.addEventListener("touchstart",autoStart,{once:true}); return()=>{document.removeEventListener("click",autoStart); document.removeEventListener("touchstart",autoStart);}; },[]);
   useEffect(()=>{ const onMediaPlay=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current&&playingRef.current)handleStop(); }; const onMediaStop=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current)setTimeout(()=>{ if(!playingRef.current)handlePlay(); },800); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true); document.removeEventListener("pause",onMediaStop,true); document.removeEventListener("ended",onMediaStop,true);}; },[]);
   useEffect(()=>()=>{stopAudio();},[stopAudio]);
