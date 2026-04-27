@@ -14976,7 +14976,8 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     return ambientMode && ambientMode!=="auto" ? ambientMode : "auto";
   };
   const trackId=audioIdFromCfg(cfg);
-  const trackSrc=`/ambient/${trackId}.wav`;
+  // Cache-bust per track so Vercel/browser never keeps playing an older ambient file.
+  const trackSrc=`/ambient/${trackId}.wav?v=v149-${trackId}`;
 
   const stopFallback=()=>{
     const fb=fallbackRef.current;
@@ -15046,6 +15047,16 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     }catch(e){ console.warn("Vedatime ambient fallback failed",e); }
   };
 
+  const hardStopAudio=()=>{
+    clearInterval(fadeTimerRef.current);
+    stopFallback();
+    const audio=audioRef.current;
+    if(audio){
+      try{ audio.pause(); audio.currentTime=0; audio.removeAttribute("src"); audio.load(); }catch(e){}
+    }
+    audioRef.current=null;
+  };
+
   const stopAudio=(fadeMs=350)=>{
     clearInterval(fadeTimerRef.current);
     stopFallback();
@@ -15055,13 +15066,14 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     fadeTimerRef.current=setInterval(()=>{
       step++;
       try{ audio.volume=Math.max(0,startVol*(1-step/steps)); }catch(e){}
-      if(step>=steps){ clearInterval(fadeTimerRef.current); try{audio.pause(); audio.currentTime=0; audio.src="";}catch(e){} if(audioRef.current===audio) audioRef.current=null; setStatus("ready"); }
+      if(step>=steps){ clearInterval(fadeTimerRef.current); try{audio.pause(); audio.currentTime=0; audio.removeAttribute("src"); audio.load();}catch(e){} if(audioRef.current===audio) audioRef.current=null; setStatus("ready"); }
     },Math.max(16,fadeMs/steps));
   };
 
   const startAudio=useCallback(()=>{
     try{
-      stopAudio(40);
+      // For deity changes, do a hard stop/reload. A soft fade can leave the old loop active.
+      hardStopAudio();
       setStatus("loading");
       const audio=new Audio(trackSrc);
       audio.loop=true;
