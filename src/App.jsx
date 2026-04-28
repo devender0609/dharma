@@ -5064,6 +5064,16 @@ const DEITY_OPTIONS=[
   {id:"rama",    name:"Rama",    emoji:"🏹",color:"#FF8C00",mantra:"Ram Ram Jai Raja Ram",   mantraHint:"Chant in the morning for dharma"},
   {id:"surya",   name:"Surya",   emoji:"☀️",color:"#FF8C42",mantra:"Om Suryaya Namaha",      mantraHint:"Chant at sunrise facing east"},
 ];
+const AMBIENT_MODE_BY_DEITY={shiva:"shiva",vishnu:"vishnu",devi:"devi",ganesha:"ganesha",hanuman:"hanuman",krishna:"krishna",rama:"rama",surya:"surya"};
+function normalizeAmbientModeForDeity(id){
+  const key=String(id||"").toLowerCase();
+  return AMBIENT_MODE_BY_DEITY[key] || "auto";
+}
+function notifyVedatimeDeityChanged(id){
+  if(typeof window==="undefined")return;
+  const ambientMode=normalizeAmbientModeForDeity(id);
+  try{ window.dispatchEvent(new CustomEvent("vedatime:deity-change",{detail:{id:id||null,ambientMode}})); }catch(e){}
+}
 // Day-of-week default deity when user has no preference set
 const DOW_DEITY_DEFAULT=[4,0,2,6,3,5,1]; // Sun→Surya(7), Mon→Shiva(0), Tue→Hanuman(4), Wed→Ganesha(3), Thu→Vishnu(1), Fri→Devi(2), Sat→Shiva(0) — using DEITY_OPTIONS indices
 const DOW_DEITY_IDX=[7,0,4,3,1,2,0]; // by day 0-6: Sun=Surya, Mon=Shiva, Tue=Hanuman, Wed=Ganesha, Thu=Vishnu, Fri=Devi, Sat=Shiva
@@ -5322,7 +5332,7 @@ function TodayScreen({goTo,S,bp,T,theme,setTheme,lang,setLang,selectedLocation,s
   });
   const[smartRemindersEnabled,setSmartRemindersEnabled]=useState(()=>{try{return !!localStorage.getItem('vedatime_fcm_token') && localStorage.getItem('vedatime_reminders')==='true';}catch(e){return false;}});
   const[reminderSetupStatus,setReminderSetupStatus]=useState('');
-  const setPreferredDeity=(id)=>{ _setPreferredDeity(id); try{ if(id) localStorage.setItem("vedatime_preferred_deity",id); else localStorage.removeItem("vedatime_preferred_deity"); }catch(e){} };
+  const setPreferredDeity=(id)=>{ _setPreferredDeity(id); try{ if(id) localStorage.setItem("vedatime_preferred_deity",id); else localStorage.removeItem("vedatime_preferred_deity"); }catch(e){} notifyVedatimeDeityChanged(id); };
   const SMART_REMINDER_TYPES=['ashtami','ekadashi','purnima','muhurat','pradosh','amavasya','chaturthi','shashthi','navami'];
   const enableSmartReminders=()=>{
     // Instant UI response first. Firebase token setup can take a few seconds, so do it in the background.
@@ -14886,6 +14896,7 @@ const PREMIUM_AMBIENT_TRACKS = {
   lakshmi: {id:"lakshmi", deity:"Lakshmi", emoji:"✨", color:"#FF69B4", label:"Lakshmi Aarti", rootHz:349.23, desc:"Abundance, grace and Friday devotion", ytQ:"Om Jai Lakshmi Mata aarti devotional", audioUrls:[]},
   devi: {id:"devi", deity:"Durga · Devi", emoji:"🌺", color:"#F45AAF", label:"Devi Shakti", rootHz:349.23, desc:"Ashtami, Navratri and Shakti ambience", ytQ:"Durga mantra Ashtami devotional", audioUrls:[]},
   krishna: {id:"krishna", deity:"Krishna · Chandra", emoji:"🌕", color:"#B7C7FF", label:"Moonlight Krishna", rootHz:261.63, desc:"Purnima and calm night devotion", ytQ:"Purnima Krishna bhajan calm devotional", audioUrls:[]},
+  rama: {id:"rama", deity:"Rama", emoji:"🏹", color:"#FF8C00", label:"Rama Dhyan", rootHz:294.00, desc:"Dharma, courage and Rama devotion", ytQ:"Shri Ram bhajan calm devotional", audioUrls:[]},
   surya: {id:"surya", deity:"Surya · Rama", emoji:"☀️", color:"#FF8C42", label:"Surya Morning", rootHz:294.00, desc:"Morning brightness and Surya devotion", ytQ:"Surya mantra morning bhajan Jai Surya Narayan", audioUrls:[]},
   meditation: {id:"meditation", deity:"Meditation", emoji:"🧘", color:"#68B3FF", label:"Deep Meditation", rootHz:196.00, desc:"Soft tanpura-style focus and relaxation", ytQ:"Indian tanpura meditation ambient", audioUrls:[]},
 };
@@ -14942,13 +14953,22 @@ function getPremiumAmbientConfig({now, weekdayCfg, festival, observances, userMo
   return {...weekdayCfg, reason:"Weekday deity fallback"};
 }
 
+function getInitialAmbientMode(){
+  try{
+    const preferred=localStorage.getItem("vedatime_preferred_deity");
+    const preferredMode=normalizeAmbientModeForDeity(preferred);
+    if(preferredMode!=="auto") return preferredMode;
+    return localStorage.getItem("vedatime_ambient_mode")||"auto";
+  }catch(e){ return "auto"; }
+}
+
 function BgMusicPlayer({S, selectedLocation="austin"}){
   const ctxRef=useRef(null);
   const masterGainRef=useRef(null);
   const ambientNodesRef=useRef([]);
   const [playing,setPlaying]=useState(false);
   const [minimized,setMinimized]=useState(false);
-  const [ambientMode,setAmbientMode]=useState(()=>{ try{return localStorage.getItem("vedatime_ambient_mode")||"auto";}catch(e){return"auto";} });
+  const [ambientMode,setAmbientMode]=useState(()=>getInitialAmbientMode());
   const [volume,setVolume]=useState(()=>{ try{ const raw=localStorage.getItem("vedatime_ambient_volume"); const stored=raw==null?NaN:Number(raw); if(!localStorage.getItem("vedatime_ambient_volume_boost_v2")){ localStorage.setItem("vedatime_ambient_volume_boost_v2","1"); return Math.max(Number.isFinite(stored)?stored:0,0.85); } return Number.isFinite(stored)?stored:0.85; }catch(e){return 0.85;} });
   const [dragPos,setDragPos]=useState({x:12,y:typeof window!=="undefined"?Math.max(60,window.innerHeight-260):500});
   const playingRef=useRef(false);
@@ -15011,6 +15031,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     if(id.includes("lakshmi")) return {...base, root, cycle:4.75, wave:"sine", filter:2850, gain:0.395, drone:[0,4,7,12], melody:[0,4,7,11,12,16,12,7], accents:[0,0.9,1.8,2.85,3.8,4.35], bell:true, pulse:false, shimmer:true};
     if(id.includes("devi")) return {...base, root, cycle:4.55, wave:"triangle", filter:2500, gain:0.425, drone:[0,3,7,10,12], melody:[0,3,7,10,12,15,12,10,7], accents:[0,0.75,1.5,2.25,3.05,3.85], bell:true, pulse:true, shimmer:false};
     if(id.includes("krishna")||id.includes("moon")) return {...base, root, cycle:6.35, wave:"sine", filter:2200, gain:0.385, drone:[0,7,12], melody:[0,2,4,7,9,12,9,7,4,2], accents:[0,1.1,2.25,3.45,4.8,5.75], bell:true, pulse:false, shimmer:true};
+    if(id.includes("rama")) return {...base, root, cycle:5.55, wave:"triangle", filter:2550, gain:0.405, drone:[0,7,12,19], melody:[0,4,7,9,12,16,12,9,7,4], accents:[0,0.95,1.9,2.9,4.05,5.0], bell:true, pulse:true, shimmer:false};
     if(id.includes("surya")||id.includes("morning")||id.includes("abhijit")) return {...base, root, cycle:4.25, wave:"sawtooth", filter:3000, gain:0.40, drone:[0,7,12,16], melody:[0,4,7,12,16,19,16,12], accents:[0,0.72,1.45,2.2,2.95,3.65], bell:true, pulse:true, shimmer:true};
     if(id.includes("meditation")||id.includes("brahma")||id.includes("night")) return {...base, root, cycle:8.6, wave:"sine", filter:950, gain:0.35, drone:[0,-12,5,12], melody:[0,-7,-12,-7,0,5,0], accents:[0,2.65,5.25,7.45], bell:false, pulse:false, shimmer:false};
     return base;
@@ -15112,6 +15133,14 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const handlePlay=()=>{ setPlaying(true); playingRef.current=true; setTimeout(()=>startAudio(),0); };
   const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
+  useEffect(()=>{
+    const syncFromDeity=(id)=>setAmbientMode(normalizeAmbientModeForDeity(id));
+    const onDeityChange=(e)=>setAmbientMode(e?.detail?.ambientMode || normalizeAmbientModeForDeity(e?.detail?.id));
+    const onStorage=(e)=>{ if(e.key==="vedatime_preferred_deity") syncFromDeity(e.newValue); };
+    window.addEventListener("vedatime:deity-change",onDeityChange);
+    window.addEventListener("storage",onStorage);
+    return()=>{ window.removeEventListener("vedatime:deity-change",onDeityChange); window.removeEventListener("storage",onStorage); };
+  },[]);
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); if(masterGainRef.current&&ctxRef.current){ try{ const ctx=ctxRef.current; masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime); masterGainRef.current.gain.setTargetAtTime(Math.max(0.08,Math.min(1,volume)),ctx.currentTime,0.08); }catch(e){} } },[volume]);
   useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
   useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(Math.max(0.08,Math.min(1,volume))*1.00,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
@@ -15122,7 +15151,7 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const onDragMove=useCallback((e)=>{ if(!draggingRef.current)return; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; const dx=clientX-dragStartRef.current.x; const dy=clientY-dragStartRef.current.y; setDragPos({x:Math.max(8,Math.min(window.innerWidth-250,dragStartRef.current.px+dx)),y:Math.max(8,Math.min(window.innerHeight-250,dragStartRef.current.py+dy))}); },[]);
   const onDragEnd=()=>{ draggingRef.current=false; };
   useEffect(()=>{ document.addEventListener("mousemove",onDragMove); document.addEventListener("mouseup",onDragEnd); document.addEventListener("touchmove",onDragMove,{passive:false}); document.addEventListener("touchend",onDragEnd); return()=>{document.removeEventListener("mousemove",onDragMove); document.removeEventListener("mouseup",onDragEnd); document.removeEventListener("touchmove",onDragMove); document.removeEventListener("touchend",onDragEnd);}; },[onDragMove]);
-  const ambientOptions=[["auto","Auto"],["shiva","Shiva"],["hanuman","Hanuman"],["ganesha","Ganesha"],["vishnu","Vishnu"],["lakshmi","Lakshmi"],["devi","Devi"],["krishna","Krishna"],["surya","Surya"],["meditation","Meditation"]];
+  const ambientOptions=[["auto","Auto"],["shiva","Shiva"],["hanuman","Hanuman"],["ganesha","Ganesha"],["vishnu","Vishnu"],["lakshmi","Lakshmi"],["devi","Devi"],["krishna","Krishna"],["rama","Rama"],["surya","Surya"],["meditation","Meditation"]];
   if(minimized)return <div onClick={()=>setMinimized(false)} style={{position:"fixed",top:dragPos.y,left:dragPos.x,zIndex:9999,width:46,height:46,borderRadius:"50%",pointerEvents:"auto",background:playing?`linear-gradient(135deg,${cfg.color},${cfg.color}88)`:"rgba(15,15,35,0.92)",display:"flex",alignItems:"center",justifyContent:"center",fontSize:20,cursor:"pointer",boxShadow:"0 4px 20px rgba(0,0,0,0.5)",border:`2px solid ${playing?cfg.color+"88":"rgba(255,255,255,0.12)"}`,backdropFilter:"blur(12px)"}}>{playing?"🎵":"🔇"}</div>;
   return <div style={{position:"fixed",left:dragPos.x,top:dragPos.y,zIndex:9999,pointerEvents:"auto",background:"rgba(8,6,22,0.97)",backdropFilter:"blur(20px)",border:`1px solid ${cfg.color}44`,borderRadius:20,padding:"12px 14px",boxShadow:"0 8px 40px rgba(0,0,0,0.65)",minWidth:220,maxWidth:240,touchAction:"none",userSelect:"none"}}>
     <div onMouseDown={onDragStart} onTouchStart={onDragStart} style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:9,cursor:"grab"}}><div style={{display:"flex",alignItems:"center",gap:7}}><div style={{width:34,height:34,borderRadius:"50%",background:`${cfg.color}22`,border:`1px solid ${cfg.color}44`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:16}}>{cfg.emoji}</div><div><p style={{color:cfg.color,fontSize:10,fontWeight:900,margin:0,lineHeight:1.2}}>{cfg.label}</p><p style={{color:"rgba(255,255,255,0.34)",fontSize:8,margin:0}}>{cfg.reason||cfg.desc}</p></div></div><button onClick={()=>setMinimized(true)} style={{background:"none",border:"none",color:"rgba(255,255,255,0.35)",fontSize:13,cursor:"pointer",padding:"2px 5px"}}>✕</button></div>
@@ -16052,6 +16081,7 @@ function OnboardingModal({open,onClose,S,bp,selectedLocation,setSelectedLocation
       localStorage.setItem('vedatime_goal',goal);
       localStorage.setItem('vedatime_reminders', reminders?'true':'false');
       localStorage.setItem('vedatime_preferred_deity', deity);
+      notifyVedatimeDeityChanged(deity);
       localStorage.setItem('vedatime_interests', JSON.stringify(interests.length?interests:['festivals','devotion','learning']));
     }catch(e){}
     if(reminders) await requestNotificationPermission();
