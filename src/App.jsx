@@ -14992,16 +14992,18 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const getAmbientProfile=(track)=>{
     const id=String(track?.id||"default").toLowerCase();
     const root=track?.rootHz||261.63;
-    const base={root, cycle:5.2, wave:"sine", filter:1800, gain:0.42, drone:[0,7,12], melody:[0,7,12,7], accents:[0,1.15,2.45,3.6,4.55], bell:false};
-    if(id.includes("shiva")) return {...base, root, cycle:6.4, wave:"sine", filter:1350, gain:0.46, drone:[0,5,12], melody:[0,-12,5,0], accents:[0,1.55,3.1,4.75], bell:true};
-    if(id.includes("hanuman")) return {...base, root, cycle:4.4, wave:"triangle", filter:2100, gain:0.40, drone:[0,7,12], melody:[0,7,10,12,7], accents:[0,0.85,1.7,2.65,3.55], bell:false};
-    if(id.includes("ganesha")) return {...base, root, cycle:5.0, wave:"triangle", filter:1700, gain:0.405, drone:[0,7,12], melody:[0,4,7,4,0], accents:[0,1.05,2.1,3.05,4.05], bell:true};
-    if(id.includes("vishnu")) return {...base, root, cycle:5.8, wave:"sine", filter:1900, gain:0.40, drone:[0,7,12], melody:[0,2,7,9,7], accents:[0,1.35,2.65,4.05,5.1], bell:false};
-    if(id.includes("lakshmi")) return {...base, root, cycle:4.9, wave:"sine", filter:2300, gain:0.38, drone:[0,7,12], melody:[0,4,7,11,12], accents:[0,0.95,1.9,3.0,4.05], bell:true};
-    if(id.includes("devi")) return {...base, root, cycle:5.1, wave:"triangle", filter:2200, gain:0.405, drone:[0,3,7,12], melody:[0,3,7,10,12], accents:[0,0.9,1.8,2.85,4.0], bell:true};
-    if(id.includes("krishna")||id.includes("moon")) return {...base, root, cycle:6.0, wave:"sine", filter:2000, gain:0.36, drone:[0,7,12], melody:[0,2,4,7,12,7], accents:[0,1.2,2.4,3.7,5.0], bell:true};
-    if(id.includes("surya")||id.includes("morning")||id.includes("abhijit")) return {...base, root, cycle:4.8, wave:"triangle", filter:2400, gain:0.38, drone:[0,7,12], melody:[0,4,7,12,16], accents:[0,0.95,1.9,2.9,3.9], bell:true};
-    if(id.includes("meditation")||id.includes("brahma")||id.includes("night")) return {...base, root, cycle:7.2, wave:"sine", filter:1200, gain:0.34, drone:[0,5,12], melody:[0,-7,0,5], accents:[0,2.0,4.1,6.0], bell:false};
+    // Each mode intentionally has a different rhythm, scale, register, waveform, filter, and bell behavior.
+    // This keeps the selector from sounding like the same drone with only a label change.
+    const base={root, cycle:5.2, wave:"sine", filter:1800, gain:0.42, drone:[0,7,12], melody:[0,7,12,7], accents:[0,1.15,2.45,3.6,4.55], bell:false, pulse:false, shimmer:false};
+    if(id.includes("shiva")) return {...base, root, cycle:7.0, wave:"sine", filter:1150, gain:0.47, drone:[0,-12,5,12], melody:[0,-12,-7,0,5,0], accents:[0,1.85,3.75,5.55], bell:true, pulse:false, shimmer:false};
+    if(id.includes("hanuman")) return {...base, root, cycle:3.85, wave:"sawtooth", filter:2600, gain:0.42, drone:[0,7,12], melody:[0,7,10,12,17,12,10,7], accents:[0,0.55,1.1,1.75,2.35,3.05], bell:false, pulse:true, shimmer:false};
+    if(id.includes("ganesha")) return {...base, root, cycle:5.15, wave:"triangle", filter:1750, gain:0.415, drone:[0,7,12], melody:[0,4,7,9,7,4,0], accents:[0,1.05,2.15,3.2,4.25], bell:true, pulse:true, shimmer:false};
+    if(id.includes("vishnu")) return {...base, root, cycle:6.15, wave:"sine", filter:2050, gain:0.405, drone:[0,7,12,19], melody:[0,2,7,9,14,9,7,2], accents:[0,1.45,2.85,4.45,5.45], bell:false, pulse:false, shimmer:true};
+    if(id.includes("lakshmi")) return {...base, root, cycle:4.75, wave:"sine", filter:2850, gain:0.395, drone:[0,4,7,12], melody:[0,4,7,11,12,16,12,7], accents:[0,0.9,1.8,2.85,3.8,4.35], bell:true, pulse:false, shimmer:true};
+    if(id.includes("devi")) return {...base, root, cycle:4.55, wave:"triangle", filter:2500, gain:0.425, drone:[0,3,7,10,12], melody:[0,3,7,10,12,15,12,10,7], accents:[0,0.75,1.5,2.25,3.05,3.85], bell:true, pulse:true, shimmer:false};
+    if(id.includes("krishna")||id.includes("moon")) return {...base, root, cycle:6.35, wave:"sine", filter:2200, gain:0.385, drone:[0,7,12], melody:[0,2,4,7,9,12,9,7,4,2], accents:[0,1.1,2.25,3.45,4.8,5.75], bell:true, pulse:false, shimmer:true};
+    if(id.includes("surya")||id.includes("morning")||id.includes("abhijit")) return {...base, root, cycle:4.25, wave:"sawtooth", filter:3000, gain:0.40, drone:[0,7,12,16], melody:[0,4,7,12,16,19,16,12], accents:[0,0.72,1.45,2.2,2.95,3.65], bell:true, pulse:true, shimmer:true};
+    if(id.includes("meditation")||id.includes("brahma")||id.includes("night")) return {...base, root, cycle:8.6, wave:"sine", filter:950, gain:0.35, drone:[0,-12,5,12], melody:[0,-7,-12,-7,0,5,0], accents:[0,2.65,5.25,7.45], bell:false, pulse:false, shimmer:false};
     return base;
   };
   const hz=(root,semitones)=>root*Math.pow(2,semitones/12);
@@ -15018,10 +15020,13 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const playProfileMoment=(ctx,profile,step,when)=>{
     const master=masterGainRef.current; if(!master)return;
     const note=profile.melody[step%profile.melody.length];
-    profile.drone.forEach((semi,i)=>playTone(ctx,hz(profile.root,semi),when,3.7,profile.gain*[0.30,0.18,0.12,0.08][i],"sine",master));
-    playTone(ctx,hz(profile.root,note),when+0.04,2.2,profile.gain*0.34,profile.wave,master);
-    playTone(ctx,hz(profile.root,note+12),when+0.08,1.7,profile.gain*0.10,"sine",master);
-    if(profile.bell && step%2===0){ playTone(ctx,hz(profile.root,note+24),when+0.16,1.15,profile.gain*0.075,"sine",master); }
+    const droneGains=[0.30,0.20,0.13,0.08,0.05];
+    profile.drone.forEach((semi,i)=>playTone(ctx,hz(profile.root,semi),when,3.7,profile.gain*(droneGains[i]||0.05),"sine",master));
+    if(profile.pulse){ playTone(ctx,hz(profile.root,-12),when+0.01,0.22,profile.gain*0.26,"triangle",master); }
+    playTone(ctx,hz(profile.root,note),when+0.04,2.15,profile.gain*0.38,profile.wave,master);
+    playTone(ctx,hz(profile.root,note+12),when+0.08,1.55,profile.gain*0.12,"sine",master);
+    if(profile.shimmer){ playTone(ctx,hz(profile.root,note+19),when+0.18,0.85,profile.gain*0.07,"triangle",master); }
+    if(profile.bell && step%2===0){ playTone(ctx,hz(profile.root,note+24),when+0.16,1.15,profile.gain*0.085,"sine",master); }
   };
   const startWebAudio=useCallback((hardReset=true)=>{
     try{
