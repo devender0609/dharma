@@ -16351,6 +16351,34 @@ function SeoTrustStrip({S, items}){
   );
 }
 
+
+const SITE_URL = "https://vedatime.vercel.app";
+const SEO_LANDING_LINKS = [
+  { href: "/today-panchang", title: "Today Panchang", body: "Daily tithi, nakshatra, yoga, karana, and muhurat guidance." },
+  { href: "/ekadashi-dates", title: "Ekadashi Dates", body: "Sacred fasting days, Vishnu devotion, and monthly observance planning." },
+  { href: "/muhurat-today", title: "Muhurat Today", body: "Auspicious timing context for puja, rituals, and meaningful actions." },
+  { href: "/hindu-festival-calendar", title: "Hindu Festival Calendar", body: "Major festivals, vrats, lunar observances, and yearly spiritual rhythm." },
+  { href: "/amavasya-purnima", title: "Amavasya & Purnima", body: "New moon and full moon observances with spiritual context." },
+  { href: "/nakshatra-today", title: "Nakshatra Today", body: "Daily lunar constellation guidance as part of the Panchang." },
+];
+
+function SeoInternalLinks({S, title="Explore Vedatime Guides"}){
+  return (
+    <section style={{background:S.card,border:`1px solid ${S.border}`,borderRadius:24,padding:20,boxShadow:"0 12px 40px rgba(0,0,0,0.18)",margin:"16px 0"}}>
+      <div style={{fontSize:12,fontWeight:900,letterSpacing:1.2,color:S.muted,marginBottom:8}}>EXPLORE MORE</div>
+      <h2 style={{margin:"0 0 12px",fontSize:22,color:S.text}}>{title}</h2>
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(220px,1fr))",gap:12}}>
+        {SEO_LANDING_LINKS.map(link=>(
+          <a key={link.href} href={link.href} style={{display:"block",textDecoration:"none",background:S.surface,border:`1px solid ${S.border}`,borderRadius:18,padding:14,color:S.text}}>
+            <div style={{fontWeight:900,marginBottom:6}}>{link.title} →</div>
+            <div style={{fontSize:13,lineHeight:1.55,color:S.muted}}>{link.body}</div>
+          </a>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function TodayPanchangSEO({S,lang="English"}){
   const title = lang==="Hindi" ? "आज का पंचांग – तिथि, नक्षत्र और मुहूर्त" :
                 lang==="Sanskrit" ? "अद्यतन पञ्चाङ्गम् – तिथिः, नक्षत्रम्, मुहूर्तम्" :
@@ -16405,6 +16433,7 @@ function TodayPanchangSEO({S,lang="English"}){
 
   return (
     <div style={{maxWidth:980,margin:"0 auto",padding:"24px 0 56px",color:S.text}}>
+      <SeoMeta title={title + " | Vedatime"} description={lang==="Hindi" ? "आज की तिथि, नक्षत्र, योग, करण और मुहूर्त स्थान के अनुसार देखें। Vedatime पर दैनिक पंचांग और आध्यात्मिक मार्गदर्शन प्राप्त करें।" : lang==="Sanskrit" ? "अद्यतन-तिथि, नक्षत्र, योग, करण, मुहूर्तं च स्व-स्थानानुसार पश्यतु। Vedatime इत्यत्र दैनिक-पञ्चाङ्गं आध्यात्मिक-मार्गदर्शनं च लभ्यते।" : "Check today’s Panchang including tithi, nakshatra, yoga, karana, and muhurat based on your location. Get daily spiritual guidance with Vedatime."} />
       <div style={{...box, background:S.heroGrad, color:"#fff"}}>
         <div style={{fontSize:12,fontWeight:800,letterSpacing:1.2,opacity:0.85,marginBottom:8}}>
           {lang==="Hindi" ? "दैनिक आध्यात्मिक मार्गदर्शन" : lang==="Sanskrit" ? "दैनिकम् आध्यात्मिक-मार्गदर्शनम्" : "DAILY SPIRITUAL GUIDANCE"}
@@ -16433,6 +16462,8 @@ function TodayPanchangSEO({S,lang="English"}){
           {kicker: lang==="Hindi" ? "अगला कदम" : lang==="Sanskrit" ? "अनन्तरं" : "NEXT STEP", title: lang==="Hindi" ? "ऐप खोलें और गहराई से देखें" : lang==="Sanskrit" ? "अनुप्रवेश्य विस्तरेण पश्यतु" : "Open the app for the full experience", body: lang==="Hindi" ? "सिर्फ पढ़ें नहीं — पूरा पंचांग, व्रत, AI और प्रीमियम टूल देखें।" : lang==="Sanskrit" ? "केवलं न पठतु — पूर्णं पञ्चाङ्गं, व्रतानि, AI, प्रीमियम्-उपकरणानि च पश्यतु।" : "Go beyond the article into the full app with Panchang, festivals, AI, and premium tools."}
         ]}
       />
+
+      <SeoInternalLinks S={S} />
 
       <div style={{height:16}} />
 
@@ -16464,6 +16495,20 @@ function TodayPanchangSEO({S,lang="English"}){
           <li>{lang==="Hindi" ? "एकादशी, प्रदोष, पूर्णिमा जैसे व्रतों और पर्वों का पालन आसान बनाता है" : lang==="Sanskrit" ? "एकादशी-प्रदोष-पूर्णिमादि-व्रत-पर्वपालनं सुकरं करोति" : "Makes it easier to observe Ekadashi, Pradosh, Purnima, and festival days"}</li>
           <li>{lang==="Hindi" ? "दैनिक जीवन को पारंपरिक आध्यात्मिक लय से जोड़ता है" : lang==="Sanskrit" ? "दैनिकजीवनं पारम्परिक-आध्यात्मिक-लयया संयोजयति" : "Aligns daily life with traditional spiritual rhythms"}</li>
         </ul>
+      </div>
+
+      <div style={{...box}}>
+        <h2 style={{marginTop:0}}>{lang==="Hindi" ? "इस पेज का उपयोग कैसे करें" : lang==="Sanskrit" ? "अस्य पृष्ठस्य उपयोगः" : "How to use this Panchang page"}</h2>
+        <p style={{margin:0,lineHeight:1.8}}>
+          {lang==="Hindi" ? "पंचांग को केवल एक कैलेंडर तारीख की तरह न देखें। तिथि चंद्र दिवस बताती है, नक्षत्र चंद्रमा की स्थिति से जुड़ा होता है, योग और करण दैनिक ऊर्जा को समझने में सहायता करते हैं, और मुहूर्त किसी कार्य को आरम्भ करने के लिए शुभ समय का संकेत देता है।" : lang==="Sanskrit" ? "पञ्चाङ्गं केवलं दिनाङ्कः नास्ति। तिथिः चान्द्र-दिवसं दर्शयति, नक्षत्रं चन्द्र-स्थित्या सम्बद्धम्, योगः करणं च दैनिक-कालस्य भावं सूचयतः, मुहूर्तः शुभारम्भाय अनुकूलं कालं दर्शयति।" : "Use Panchang as a daily spiritual map, not just a calendar date. Tithi describes the lunar day, nakshatra reflects the Moon’s constellation, yoga and karana add timing context, and muhurat highlights favorable windows for rituals, worship, fasting, and meaningful actions."}
+        </p>
+      </div>
+
+      <div style={{...box}}>
+        <h2 style={{marginTop:0}}>{lang==="Hindi" ? "स्थान क्यों महत्वपूर्ण है" : lang==="Sanskrit" ? "स्थानस्य महत्त्वम्" : "Why location matters"}</h2>
+        <p style={{margin:0,lineHeight:1.8}}>
+          {lang==="Hindi" ? "तिथि, नक्षत्र और मुहूर्त सूर्योदय, चंद्रोदय, स्थानीय समय और शहर के अनुसार बदल सकते हैं। इसलिए Vedatime का लक्ष्य सामान्य जानकारी को स्थान-आधारित दैनिक मार्गदर्शन से जोड़ना है।" : lang==="Sanskrit" ? "तिथिः, नक्षत्रं, मुहूर्तं च सूर्योदय-चन्द्रोदय-स्थानिक-काल-नगरानुसार परिवर्तितुं शक्नुवन्ति। अतः Vedatime सामान्य-सूचनां स्थानाधारित-मार्गदर्शनेन संयोजयति।" : "Panchang timings can change by city because sunrise, moonrise, local time zone, and observance windows are location-sensitive. Vedatime is designed to connect general Hindu calendar concepts with personalized daily guidance for your selected location."}
+        </p>
       </div>
 
       <div style={{...box}}>
@@ -16513,6 +16558,9 @@ function SeoMeta({title, description}){
     const prevTitle = document.title;
     const prevMeta = document.querySelector('meta[name="description"]');
     const prevDesc = prevMeta?.getAttribute("content") || "";
+    const prevCanonical = document.querySelector('link[rel="canonical"]');
+    const prevCanonicalHref = prevCanonical?.getAttribute("href") || "";
+    const canonicalHref = SITE_URL + (window.location.pathname || "/");
     document.title = title;
     let meta = prevMeta;
     if(!meta){
@@ -16521,12 +16569,37 @@ function SeoMeta({title, description}){
       document.head.appendChild(meta);
     }
     meta.setAttribute("content", description);
+    let canonical = prevCanonical;
+    if(!canonical){
+      canonical = document.createElement("link");
+      canonical.setAttribute("rel","canonical");
+      document.head.appendChild(canonical);
+    }
+    canonical.setAttribute("href", canonicalHref);
+    const upsertMeta = (selector, attrs) => {
+      let el = document.querySelector(selector);
+      if(!el){
+        el = document.createElement("meta");
+        Object.entries(attrs).forEach(([k,v])=>el.setAttribute(k,v));
+        document.head.appendChild(el);
+      }
+      return el;
+    };
+    upsertMeta('meta[property="og:title"]',{property:"og:title",content:title}).setAttribute("content",title);
+    upsertMeta('meta[property="og:description"]',{property:"og:description",content:description}).setAttribute("content",description);
+    upsertMeta('meta[property="og:url"]',{property:"og:url",content:canonicalHref}).setAttribute("content",canonicalHref);
+    upsertMeta('meta[name="twitter:card"]',{name:"twitter:card",content:"summary_large_image"}).setAttribute("content","summary_large_image");
     return ()=>{
       document.title = prevTitle;
       const current = document.querySelector('meta[name="description"]');
       if(current){
         if(prevDesc) current.setAttribute("content", prevDesc);
         else if(!prevMeta) current.remove();
+      }
+      const currentCanonical = document.querySelector('link[rel="canonical"]');
+      if(currentCanonical){
+        if(prevCanonicalHref) currentCanonical.setAttribute("href", prevCanonicalHref);
+        else if(!prevCanonical) currentCanonical.remove();
       }
     };
   },[title, description]);
@@ -16573,6 +16646,8 @@ function SeoInfoPage({S,title,eyebrow,intro,sections,ctaText,ctaHref="https://ve
           {kicker:"CONVERSION", title:"Low-friction next step", body:"Readers can open the main app immediately, sign in, and continue with a richer personalized experience."}
         ]}
       />
+
+      <SeoInternalLinks S={S} />
 
       <div style={{height:16}} />
 
@@ -16629,12 +16704,15 @@ function EkadashiSeoPage({S}){
       ctaText="Track Ekadashi on Vedatime →"
       sourceKey="ekadashi_dates"
       sections={[
+        {title:"What is Ekadashi?", text:"Ekadashi is the eleventh lunar day in each half of the Hindu lunar month. It is traditionally associated with devotion to Lord Vishnu, self-discipline, fasting, prayer, mantra, and simplified living. Because it follows the lunar calendar, the observance does not fall on the same Gregorian date each month."},
         {title:"Why observe Ekadashi?", list:[
           "A traditional day of spiritual purification and discipline",
           "An opportunity for fasting, prayer, mantra, and Vishnu devotion",
-          "A simple way to stay connected to monthly sacred observances"
+          "A simple way to stay connected to monthly sacred observances",
+          "A recurring rhythm for reflection, restraint, gratitude, and devotion"
         ]},
-        {title:"How Vedatime helps", text:"Vedatime makes it easier to follow upcoming Ekadashi dates, understand timing, and connect fasting with your daily spiritual rhythm."}
+        {title:"How timing is usually understood", text:"Ekadashi timing is connected to tithi, local sunrise, and the observance rules followed by a family, temple, or tradition. This is why location-aware tools are useful: the same sacred date may need careful timing when viewed across cities and time zones."},
+        {title:"How Vedatime helps", text:"Vedatime makes it easier to follow upcoming Ekadashi dates, connect fasting with your daily Panchang, and keep reminders for observances that matter to your practice."}
       ]}
     />
   );
@@ -16651,12 +16729,15 @@ function MuhuratSeoPage({S}){
       ctaText="Check Today’s Muhurat →"
       sourceKey="muhurat_today"
       sections={[
+        {title:"What is muhurat?", text:"Muhurat refers to a favorable time window chosen for an action, ritual, prayer, or important beginning. In daily practice, people may look at Panchang factors such as tithi, nakshatra, weekday, sunrise, and other timing considerations before selecting a suitable window."},
         {title:"Common uses of muhurat", list:[
           "Puja and temple observance",
           "Beginning important life events or family rituals",
+          "Planning griha pravesh, travel, study, donation, or new work",
           "Choosing the most harmonious time for meaningful actions"
         ]},
-        {title:"Daily timing guidance", text:"Vedatime connects muhurat with the daily Panchang so you can see favorable windows alongside tithi, nakshatra, and festival context."}
+        {title:"Why city and timezone matter", text:"Auspicious timing is not purely generic. It can be affected by local sunrise and the observer’s city. Vedatime is built around the idea that daily guidance should follow the user’s selected location rather than showing a one-size-fits-all time."},
+        {title:"Daily timing guidance", text:"Vedatime connects muhurat with the daily Panchang so users can see favorable windows alongside tithi, nakshatra, festivals, reminders, and spiritual guidance."}
       ]}
     />
   );
@@ -16673,12 +16754,15 @@ function FestivalCalendarSeoPage({S}){
       ctaText="Explore Festival Calendar →"
       sourceKey="festival_calendar"
       sections={[
+        {title:"What the Hindu festival calendar includes", text:"The Hindu festival calendar brings together lunar dates, solar transitions, regional traditions, vrats, temple observances, and seasonal celebrations. Many festivals are connected to tithi and local timing, which is why the calendar is more than a fixed list of Gregorian dates."},
         {title:"Major observances", list:[
-          "Diwali, Holi, Navratri, Janmashtami, Maha Shivratri, and more",
+          "Diwali, Holi, Navratri, Janmashtami, Maha Shivratri, Ganesh Chaturthi, and more",
           "Sacred fasts and lunar observances connected to festival timing",
+          "Amavasya, Purnima, Ekadashi, Pradosh, Chaturthi, and other recurring observances",
           "Location-aware calendar guidance to support planning and preparation"
         ]},
-        {title:"Why this matters", text:"A festival calendar helps families, devotees, and learners stay rooted in the yearly rhythm of Hindu tradition."}
+        {title:"How families use it", text:"A reliable festival calendar helps families prepare for puja, fasting, school and community events, travel, temple visits, and cultural learning. It also helps younger generations understand how festivals connect to stories, seasons, devotion, and community life."},
+        {title:"Why this matters", text:"Vedatime is designed to make the yearly rhythm of Hindu tradition easier to follow with daily context, reminders, and a clear path from a festival date into the full spiritual guidance app."}
       ]}
     />
   );
@@ -16695,12 +16779,15 @@ function LunarSeoPage({S}){
       ctaText="View Lunar Observances →"
       sourceKey="amavasya_purnima"
       sections={[
+        {title:"What are Amavasya and Purnima?", text:"Amavasya is the new moon phase and Purnima is the full moon phase. Both are central points in the Hindu lunar calendar and are often connected with prayer, fasting, temple observance, charity, remembrance, and family traditions."},
         {title:"Why these dates matter", list:[
           "Amavasya is often observed with introspection, prayer, and offerings",
           "Purnima is associated with fullness, devotion, and sacred observance",
-          "Both are important anchors in the lunar rhythm of the Hindu calendar"
+          "Both are important anchors in the lunar rhythm of the Hindu calendar",
+          "Many festivals and vrats are linked to full moon or new moon timing"
         ]},
-        {title:"With Vedatime", text:"See Amavasya and Purnima alongside Panchang details, festivals, and daily spiritual guidance."}
+        {title:"Timing context", text:"Because lunar observances depend on tithi and local timing, the date experienced by a devotee can depend on the city, time zone, and traditional rule being followed. Vedatime keeps these lunar observances connected to the broader daily Panchang."},
+        {title:"With Vedatime", text:"See Amavasya and Purnima alongside Panchang details, festivals, reminders, and daily spiritual guidance so the observance feels practical rather than scattered across multiple sources."}
       ]}
     />
   );
@@ -16717,12 +16804,15 @@ function NakshatraSeoPage({S}){
       ctaText="Check Today’s Nakshatra →"
       sourceKey="nakshatra_today"
       sections={[
+        {title:"What is a nakshatra?", text:"Nakshatra refers to the lunar mansion or constellation associated with the Moon’s position. In traditional Hindu calendar use, it is one of the key Panchang elements used to understand the quality and rhythm of the day."},
         {title:"Why nakshatra matters", list:[
           "It adds depth to daily Panchang understanding",
           "It supports timing, observance, and spiritual awareness",
-          "It is commonly used in ritual, astrology, and calendar guidance"
+          "It is commonly used in ritual, astrology, and calendar guidance",
+          "It helps connect the day’s lunar quality with practical spiritual planning"
         ]},
-        {title:"Daily context", text:"Vedatime shows nakshatra with tithi, yoga, karana, and auspicious timings so the day can be understood as a whole."}
+        {title:"How to read it with Panchang", text:"Nakshatra is most useful when viewed with tithi, yoga, karana, weekday, sunrise, and muhurat. Looking at it alone can be incomplete; the whole Panchang gives a more balanced daily picture."},
+        {title:"Daily context", text:"Vedatime shows nakshatra with tithi, yoga, karana, auspicious timings, reminders, and guidance so the day can be understood as a whole."}
       ]}
     />
   );
@@ -16938,6 +17028,7 @@ export default function App(){
             <TopBar S={S} bp={bp} tab={tab} setTab={setTab} T={T} theme={theme} setTheme={setTheme} setShowSearch={setShowSearch} user={user} onLogin={()=>setShowLogin(true)} onShowPremium={()=>setShowPremium(true)} isPremium={isPremium} selectedLocation={selectedLocation} lang={lang}/>
             <div style={{padding:bp==="desktop"?"24px 28px 48px":"16px 16px 96px",width:"100%",boxSizing:"border-box",flex:1}}>
               {screen}
+              {tab==="today" && <SeoInternalLinks S={S} title="Explore Vedatime Guides" />}
             </div>
           </div>
         </div>
