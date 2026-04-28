@@ -14945,6 +14945,7 @@ function getPremiumAmbientConfig({now, weekdayCfg, festival, observances, userMo
 function BgMusicPlayer({S, selectedLocation="austin"}){
   const ctxRef=useRef(null);
   const masterGainRef=useRef(null);
+  const ambientNodesRef=useRef([]);
   const [playing,setPlaying]=useState(false);
   const [minimized,setMinimized]=useState(false);
   const [ambientMode,setAmbientMode]=useState(()=>{ try{return localStorage.getItem("vedatime_ambient_mode")||"auto";}catch(e){return"auto";} });
@@ -14973,6 +14974,8 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
     clearTimeout(scheduleRef.current); scheduleRef.current=null;
     const ctx=ctxRef.current;
     const oldMaster=masterGainRef.current;
+    const oldNodes=ambientNodesRef.current || [];
+    ambientNodesRef.current=[];
     masterGainRef.current=null;
     if(oldMaster&&ctx){
       try{
@@ -14980,13 +14983,19 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
         if(fadeMs>0){
           oldMaster.gain.setValueAtTime(Math.max(0.0001,oldMaster.gain.value||0.0001),ctx.currentTime);
           oldMaster.gain.linearRampToValueAtTime(0.0001,ctx.currentTime+fadeMs/1000);
-          setTimeout(()=>{ try{ oldMaster.disconnect(); }catch(e){} },fadeMs+80);
         }else{
           oldMaster.gain.value=0.0001;
-          oldMaster.disconnect();
         }
       }catch(e){}
     }
+    const cleanup=()=>{
+      oldNodes.forEach(n=>{
+        try{ if(n.stop) n.stop(0); }catch(e){}
+        try{ if(n.disconnect) n.disconnect(); }catch(e){}
+      });
+      try{ oldMaster?.disconnect?.(); }catch(e){}
+    };
+    if(fadeMs>0) setTimeout(cleanup,fadeMs+120); else cleanup();
   },[]);
 
   const getAmbientProfile=(track)=>{
@@ -15038,17 +15047,53 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
       const profile=getAmbientProfile(cfg);
       const master=ctx.createGain();
       const lpf=ctx.createBiquadFilter(); lpf.type="lowpass"; lpf.frequency.value=profile.filter; lpf.Q.value=0.55;
-      const delay=ctx.createDelay(0.45); delay.delayTime.value=0.22;
-      const fbGain=ctx.createGain(); fbGain.gain.value=0.18;
+      const delay=ctx.createDelay(0.55); delay.delayTime.value=0.24;
+      const fbGain=ctx.createGain(); fbGain.gain.value=0.16;
+      const compressor=ctx.createDynamicsCompressor(); compressor.threshold.value=-14; compressor.knee.value=20; compressor.ratio.value=6; compressor.attack.value=0.004; compressor.release.value=0.28;
       master.gain.setValueAtTime(0.0001,ctx.currentTime);
-      master.gain.linearRampToValueAtTime(Math.max(0.08,Math.min(1,volume))*1.00,ctx.currentTime+0.55);
-      const compressor=ctx.createDynamicsCompressor(); compressor.threshold.value=-12; compressor.knee.value=18; compressor.ratio.value=8; compressor.attack.value=0.003; compressor.release.value=0.25; master.connect(lpf); lpf.connect(compressor); lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay); delay.connect(compressor); compressor.connect(ctx.destination);
+      master.gain.linearRampToValueAtTime(Math.max(0.08,Math.min(1,volume)),ctx.currentTime+0.45);
+      master.connect(lpf); lpf.connect(compressor); lpf.connect(delay); delay.connect(fbGain); fbGain.connect(delay); delay.connect(compressor); compressor.connect(ctx.destination);
       masterGainRef.current=master;
+      ambientNodesRef.current=[master,lpf,delay,fbGain,compressor];
+
+      // Continuous drone bed: prevents the music from going silent if a short accent cycle is delayed.
+      const startContinuousDrone=(semi,i)=>{
+        try{
+          const osc=ctx.createOscillator();
+          const g=ctx.createGain();
+          const panner=ctx.createStereoPanner ? ctx.createStereoPanner() : null;
+          osc.type=i%2===0?"sine":"triangle";
+          osc.frequency.setValueAtTime(hz(profile.root,semi),ctx.currentTime);
+          osc.detune.value=(i-1.5)*2.5;
+          const baseGain=profile.gain*([0.26,0.18,0.11,0.07,0.045][i]||0.04);
+          g.gain.setValueAtTime(0.0001,ctx.currentTime);
+          g.gain.linearRampToValueAtTime(baseGain,ctx.currentTime+1.2+(i*0.15));
+          if(panner){ panner.pan.value=Math.max(-0.55,Math.min(0.55,(i-1.5)*0.28)); osc.connect(g); g.connect(panner); panner.connect(master); ambientNodesRef.current.push(osc,g,panner); }
+          else { osc.connect(g); g.connect(master); ambientNodesRef.current.push(osc,g); }
+          osc.start();
+        }catch(e){}
+      };
+      profile.drone.forEach(startContinuousDrone);
+
+      // Gentle low pulse for rhythmic modes. It is continuous, not a one-shot, so it cannot vanish after one bar.
+      if(profile.pulse){
+        try{
+          const pulseOsc=ctx.createOscillator(); const pulseGain=ctx.createGain();
+          pulseOsc.type="triangle"; pulseOsc.frequency.setValueAtTime(hz(profile.root,-12),ctx.currentTime);
+          pulseGain.gain.setValueAtTime(profile.gain*0.035,ctx.currentTime);
+          pulseOsc.connect(pulseGain); pulseGain.connect(master); pulseOsc.start();
+          ambientNodesRef.current.push(pulseOsc,pulseGain);
+        }catch(e){}
+      }
+
       let step=0;
       const scheduleCycle=()=>{
         if(!playingRef.current||masterGainRef.current!==master){ scheduleRef.current=null; return; }
-        const startAt=ctx.currentTime+0.05;
-        profile.accents.forEach((offset)=>playProfileMoment(ctx,profile,step++,startAt+offset));
+        try{
+          if(ctx.state==="suspended")ctx.resume();
+          const startAt=ctx.currentTime+0.08;
+          profile.accents.forEach((offset)=>playProfileMoment(ctx,profile,step++,startAt+offset));
+        }catch(e){ console.warn("Vedatime ambient schedule error:",e); }
         scheduleRef.current=setTimeout(scheduleCycle,Math.max(900,profile.cycle*1000-120));
       };
       scheduleCycle();
@@ -15067,12 +15112,12 @@ function BgMusicPlayer({S, selectedLocation="austin"}){
   const handlePlay=()=>{ setPlaying(true); playingRef.current=true; setTimeout(()=>startAudio(),0); };
   const handleStop=()=>{ setPlaying(false); playingRef.current=false; stopAudio(); };
   useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_mode",ambientMode);}catch(e){} },[ambientMode]);
-  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); },[volume]);
+  useEffect(()=>{ try{localStorage.setItem("vedatime_ambient_volume",String(volume));}catch(e){}; if(audioRef.current)fadeAudio(audioRef.current,audioRef.current.volume||0,volume,350); if(masterGainRef.current&&ctxRef.current){ try{ const ctx=ctxRef.current; masterGainRef.current.gain.cancelScheduledValues(ctx.currentTime); masterGainRef.current.gain.setTargetAtTime(Math.max(0.08,Math.min(1,volume)),ctx.currentTime,0.08); }catch(e){} } },[volume]);
   useEffect(()=>{ if(!playingRef.current)return; startAudio(); },[cfgKey]);
   useEffect(()=>{ AudioEngine.registerAmbient(()=>{ if(masterGainRef.current&&ctxRef.current){ try{masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(0,ctxRef.current.currentTime+0.4);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||volume,0,350);}catch(e){}} },()=>{ if(masterGainRef.current&&ctxRef.current){ try{if(ctxRef.current.state==="suspended")ctxRef.current.resume(); masterGainRef.current.gain.cancelScheduledValues(ctxRef.current.currentTime); masterGainRef.current.gain.linearRampToValueAtTime(Math.max(0.08,Math.min(1,volume))*1.00,ctxRef.current.currentTime+0.7);}catch(e){} } if(audioRef.current){try{fadeAudio(audioRef.current,audioRef.current.volume||0,volume,450);}catch(e){}} }); },[volume]);
   useEffect(()=>{ const autoStart=()=>{ if(!playingRef.current)handlePlay(); }; document.addEventListener("click",autoStart,{once:true}); document.addEventListener("touchstart",autoStart,{once:true}); return()=>{document.removeEventListener("click",autoStart); document.removeEventListener("touchstart",autoStart);}; },[]);
   useEffect(()=>{ const onMediaPlay=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current&&playingRef.current)handleStop(); }; const onMediaStop=(e)=>{ if((e.target.tagName==="AUDIO"||e.target.tagName==="VIDEO")&&e.target!==audioRef.current)setTimeout(()=>{ if(!playingRef.current)handlePlay(); },800); }; document.addEventListener("play",onMediaPlay,true); document.addEventListener("pause",onMediaStop,true); document.addEventListener("ended",onMediaStop,true); return()=>{document.removeEventListener("play",onMediaPlay,true); document.removeEventListener("pause",onMediaStop,true); document.removeEventListener("ended",onMediaStop,true);}; },[]);
-  useEffect(()=>()=>{stopAudio();},[stopAudio]);
+  useEffect(()=>()=>{ playingRef.current=false; try{ if(audioRef.current){ audioRef.current.pause(); audioRef.current.src=""; } }catch(e){} destroyWebAudio(0); },[destroyWebAudio]);
   const onDragStart=(e)=>{ draggingRef.current=true; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; dragStartRef.current={x:clientX,y:clientY,px:dragPos.x,py:dragPos.y}; e.preventDefault(); };
   const onDragMove=useCallback((e)=>{ if(!draggingRef.current)return; const clientX=e.touches?e.touches[0].clientX:e.clientX; const clientY=e.touches?e.touches[0].clientY:e.clientY; const dx=clientX-dragStartRef.current.x; const dy=clientY-dragStartRef.current.y; setDragPos({x:Math.max(8,Math.min(window.innerWidth-250,dragStartRef.current.px+dx)),y:Math.max(8,Math.min(window.innerHeight-250,dragStartRef.current.py+dy))}); },[]);
   const onDragEnd=()=>{ draggingRef.current=false; };
